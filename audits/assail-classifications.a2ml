@@ -1,0 +1,10 @@
+;; SPDX-License-Identifier: MPL-2.0
+;; panic-attack (assail) user-classification registry.
+;; Each entry flips a reviewed, structurally-necessary weak point to
+;; `suppressed`. Rationale and review live in audits/audit-residuals.adoc.
+;; Defects are FIXED in code, never recorded here.
+(assail-classifications
+  (classification
+    (file "host-rust/src/ffi.rs")
+    (category "UnsafeCode")
+    (audit "audits/audit-residuals.adoc §1 — sole FFI boundary; SPARK-proved pure/total callee")))

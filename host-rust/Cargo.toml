@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: MPL-2.0
+[package]
+name = "lsa-sentinel"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+description = "Watcher that converts 0patch's silent LSA-Protection coverage loss into an unsilenceable signal"
+license = "MPL-2.0"
+repository = "https://github.com/hyperpolymath/0patch-lsa-sentinel"
+publish = false
+
+[lib]
+name = "lsa_sentinel"
+path = "src/lib.rs"
+
+[[bin]]
+name = "lsa-sentinel"
+path = "src/main.rs"
+
+[features]
+default = []
+# Link and call the SPARK-proved classifier over the C ABI instead of the
+# in-tree Rust reference implementation. Requires `just build-core` first.
+verified-core = []
+
+# No runtime dependencies by design: Windows collectors shell out to reg.exe /
+# wevtutil / the 0patch CLI, keeping the crate buildable and testable anywhere.
+
+[[bench]]
+name = "classify_bench"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = true

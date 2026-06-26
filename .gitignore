@@ -1,3 +1,22 @@
+# SPDX-License-Identifier: MPL-2.0
+
+# Rust
+/host-rust/target/
+**/*.rs.bk
+
+# SPARK / GNAT
+/core-spark/obj/
+/core-spark/lib/
+**/*.ali
+**/gnatprove/
+
+# Zig
+/ffi-zig/zig-out/
+/ffi-zig/.zig-cache/
+
+# Idris2
+**/build/
+
 # transient
 *.tmp
 *.log

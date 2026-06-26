@@ -1,0 +1,7 @@
+package sentinel-abi
+
+version = 0.1.0
+authors = "Jonathan Jewell"
+license = "MPL-2.0"
+sourcedir = "src"
+modules = Sentinel.ABI

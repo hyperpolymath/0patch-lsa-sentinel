@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+= Assail Audit — Accepted Structural Residuals
+:date: 2026-06-25
+
+This document records the panic-attack (`assail`) weak points that remain after
+remediation, why each is a *structural necessity* rather than a defect, and the
+review that accepted it. Entries here are mirrored in
+`audits/assail-classifications.a2ml`, which flips them to `suppressed` so the CI
+gate reflects audited reality — not silence. Critical/High *defects* are still
+fixed in code, never classified away.
+
+== §1 — `host-rust/src/ffi.rs` : `UnsafeCode` (1 block)
+
+The crate's single `unsafe` block is the FFI call into the SPARK-proved
+classifier (`sentinel_classify`). An `unsafe` block is unavoidable for any
+foreign-function boundary; the residual is reduced to the minimum and contained:
+
+* It is the *only* `unsafe` in the crate, isolated in one wrapper
+  (`ffi::classify_raw`) with an explicit `# Safety` contract.
+* The callee is proved in SPARK to be *pure and total*: it reads three ints by
+  value, dereferences no pointers, holds no state, and always returns
+  (`gnatprove` discharges termination + the postcondition).
+* The result is fail-safe decoded: an out-of-range code maps to `Indeterminate`,
+  never to a positive "covered" verdict.
+
+Verdict: **accepted** — irreducible FFI surface, reviewed, proved callee.
+
+== Defects fixed in code (not classified)
+
+* `host-rust/src/collectors/snapshot.rs` — assail flagged `UnboundedAllocation`
+  on `read_to_string` (an arbitrarily large file read into a `String`). **Fixed**
+  by bounding the read to 64 KiB (`File::open` + `take`), not classified away.
+* Removed a panicking `.expect()` on the FFI result (now fail-safe `unwrap_or`).
+* Moved the `unsafe` out of business logic into a documented wrapper.
