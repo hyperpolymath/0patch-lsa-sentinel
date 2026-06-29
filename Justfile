@@ -62,6 +62,26 @@ panic-attack:
       && panic-attack assail . \
       || echo "panic-attack not on PATH — build it from ../panic-attack and re-run"
 
+# --- Packaging -------------------------------------------------------------
+
+# Build the release binary (Windows only — the live collectors are Windows).
+dist-windows:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "${OS:-}" != "Windows_NT" ] && ! rustc -vV | grep -q windows; then
+      echo "lsa-sentinel.exe must be built on Windows (live collectors are Windows-only)."
+      echo "Use the 'release' GitHub Actions workflow, or run on a Windows host:"
+      echo "    cd host-rust && cargo build --release"
+      exit 1
+    fi
+    cd host-rust && cargo build --release
+
+# Tag and push a release (CI builds + publishes the Windows artifact).
+release VERSION:
+    git tag -s {{VERSION}} -m "lsa-sentinel {{VERSION}}"
+    git push origin {{VERSION}}
+    @echo "Pushed {{VERSION}} — the release workflow will build and publish the Windows package."
+
 # --- Aggregates ------------------------------------------------------------
 
 # Full verification gate across every toolchain.

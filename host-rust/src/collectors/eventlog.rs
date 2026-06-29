@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 //! Loader presence from the CodeIntegrity log (Windows only).
 //!
-//! When LSA Protection is on, the loader is necessarily blocked — we never
-//! claim otherwise. When it is off, we corroborate by looking for recent
-//! CodeIntegrity Operational events 3033/3063 naming `0patchLoader`: their
-//! presence means a block was still occurring; their absence (with protection
-//! off) is taken as the loader being in.
+//! Delegates detection to the cross-platform-tested parsers in
+//! [`crate::collectors::parse`]. When protection is on, the loader is
+//! necessarily blocked and we skip the query; otherwise we corroborate with
+//! recent CodeIntegrity Operational events 3033/3063 naming `0patchLoader`.
 
+use crate::collectors::parse::{eventlog_mentions_loader_block, loader_from_signals};
 use crate::model::{LoaderPresence, LsaProtection};
 use std::process::Command;
 
@@ -34,12 +34,6 @@ pub fn loader_presence(protection: LsaProtection) -> Result<LoaderPresence, Stri
         return Ok(LoaderPresence::Unknown);
     }
 
-    let text = String::from_utf8_lossy(&out.stdout).to_ascii_lowercase();
-    if text.contains("0patchloader") {
-        Ok(LoaderPresence::Blocked)
-    } else if protection == LsaProtection::Off {
-        Ok(LoaderPresence::Loaded)
-    } else {
-        Ok(LoaderPresence::Unknown)
-    }
+    let text = String::from_utf8_lossy(&out.stdout);
+    Ok(loader_from_signals(protection, eventlog_mentions_loader_block(&text)))
 }

@@ -1,24 +1,27 @@
 // SPDX-License-Identifier: MPL-2.0
 //! Outstanding lsass-targeted patch status from the 0patch agent (Windows).
 //!
-//! Best-effort: queries the 0patch CLI for applied patches and looks for any
-//! whose module target is `lsass.exe`. If the CLI is absent or its format
-//! changes, we return `Unknown` rather than guess — the classifier then
-//! reports INDETERMINATE rather than a false all-clear.
+//! ⚠️ UNVERIFIED collector. The local mechanism by which the 0patch agent
+//! exposes "patches applicable to lsass.exe" has NOT been confirmed against a
+//! real install — the CLI name and `list-patches` subcommand below are a
+//! placeholder pending validation (see AFFIRMATION.adoc / docs). The collector
+//! is deliberately fail-safe: if the CLI is absent or its output is ambiguous,
+//! it returns `Unknown`, so the classifier reports INDETERMINATE (investigate)
+//! rather than a false all-clear. Parsing itself is delegated to the
+//! cross-platform-tested [`crate::collectors::parse::parse_lsass_patch_status`].
 
+use crate::collectors::parse::parse_lsass_patch_status;
 use crate::model::PatchStatus;
 use std::path::Path;
 use std::process::Command;
 
-const CLI_CANDIDATES: [&str; 2] = [
-    r"C:\Program Files (x86)\0patch\agent\0patchConsole.exe",
-    r"C:\Program Files (x86)\0patch\agent\0patchService.exe",
-];
+// Placeholder candidates — REPLACE once the real local query is confirmed.
+const CLI_CANDIDATES: [&str; 1] =
+    [r"C:\Program Files (x86)\0patch\agent\0patchConsole.exe"];
 
 pub fn lsass_patch_status() -> Result<PatchStatus, String> {
-    let cli = CLI_CANDIDATES.iter().find(|p| Path::new(p).exists());
-    let Some(cli) = cli else {
-        return Ok(PatchStatus::Unknown); // agent CLI not found
+    let Some(cli) = CLI_CANDIDATES.iter().find(|p| Path::new(p).exists()) else {
+        return Ok(PatchStatus::Unknown); // agent CLI not found -> investigate
     };
 
     let out = Command::new(cli)
@@ -29,13 +32,5 @@ pub fn lsass_patch_status() -> Result<PatchStatus, String> {
     if !out.status.success() {
         return Ok(PatchStatus::Unknown);
     }
-
-    let text = String::from_utf8_lossy(&out.stdout).to_ascii_lowercase();
-    if text.contains("lsass.exe") {
-        Ok(PatchStatus::Present)
-    } else if text.trim().is_empty() {
-        Ok(PatchStatus::Unknown)
-    } else {
-        Ok(PatchStatus::Absent)
-    }
+    Ok(parse_lsass_patch_status(&String::from_utf8_lossy(&out.stdout)))
 }

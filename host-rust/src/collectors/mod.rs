@@ -7,6 +7,7 @@
 //! key=value file and works on any platform — it powers tests and the
 //! `--snapshot` CLI mode used for triage and CI on non-Windows runners.
 
+pub mod parse;
 pub mod snapshot;
 
 #[cfg(windows)]
