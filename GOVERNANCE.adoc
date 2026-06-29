@@ -1,0 +1,125 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Governance Model
+:toc: preamble
+
+This document describes the governance model for the *0patch-lsa-sentinel*
+repository.
+
+== Overview
+
+This repository follows a **Benevolent Dictator (BDFL) Governance Model**:
+
+* A single champion (@hyperpolymath) holds the project's vision and final
+  decision authority, while actively welcoming contributions and delegating.
+* *Current reality:* the project is presently staffed by a sole maintainer.
+  That is a staffing fact, not a closed door — contributions are welcome and
+  reviewed, and authority is delegable to anyone who demonstrably carries the
+  project's essence.
+* Decisions are made transparently through GitHub issues and discussions.
+* The project adheres to the hyperpolymath estate policies where applicable.
+
+== Core Principles
+
+[cols="1,2"]
+|===
+| Principle | Description
+
+| **Benevolent Dictatorship** | Maintainer has final decision authority but seeks community input
+| **Meritocracy** | Contributions are judged on technical merit, not contributor identity
+| **Transparency** | All significant decisions are documented publicly
+| **Consensus-Seeking** | Maintainer prefers consensus but will decide when necessary
+| **Open Contribution** | Anyone can contribute via fork and pull request
+|===
+
+== Roles and Permissions
+
+[cols="1,2,2"]
+|===
+| Role | Permissions | Assignment
+
+| **Maintainer** | Write access, merge rights, admin | @hyperpolymath
+| **Contributors** | Read access, fork, submit PRs | All GitHub users
+| **Users** | Use the software, report issues | All GitHub users
+|===
+
+== Decision Making Framework
+
+=== Routine Decisions
+
+Bug fixes, documentation improvements, minor feature additions, dependency
+updates.
+
+**Process**: Maintainer reviews and merges PRs that meet quality standards.
+
+=== Significant Changes
+
+New major features, ABI/FFI changes, architecture modifications, breaking
+changes.
+
+**Process**:
+
+. Open issue describing the change
+. Discuss with community (minimum 72 hours)
+. Maintainer makes final decision
+. Document rationale in issue/PR
+
+=== Structural Decisions
+
+Repository purpose/renaming, license changes, ownership transfer,
+deprecation/archival.
+
+**Process**:
+
+. Extended discussion (minimum 1 week)
+. Maintainer makes final decision
+. Document in CHANGELOG and governance docs
+
+== Conflict Resolution
+
+. Discuss in the relevant GitHub issue or PR
+. Provide technical justification for positions
+. Maintainer mediates and makes final decision
+. Decision is documented and can be revisited later
+
+== Project Policies
+
+This repository adheres to hyperpolymath estate-wide policies:
+
+* **License**: MPL-2.0 for code, CC-BY-SA-4.0 for prose (per
+  standards/LICENCE-POLICY.adoc)
+* **Code of Conduct**: link:CODE_OF_CONDUCT.md[CODE_OF_CONDUCT.md]
+* **Security**: link:SECURITY.md[SECURITY.md]
+* **Contributing**: link:CONTRIBUTING.md[CONTRIBUTING.md]
+
+== Repository-Specific Conventions
+
+[cols="1,2"]
+|===
+| Convention | Description
+
+| **Signing** | All commits must be signed (SSH or GPG)
+| **SPDX Headers** | All source files must carry SPDX license identifiers
+| **Multi-language proof** | The classifier verdict is SPARK-proved and cross-checked across Rust, Idris2, and Zig
+| **Contractiles** | Mustfile, Dustfile, Trustfile in .machine_readable/contractiles/
+| **Machine Readable** | descriptiles in .machine_readable/descriptiles/
+| **CI/CD** | GitHub Actions workflows in .github/workflows/
+|===
+
+== See Also
+
+* link:MAINTAINERS.adoc[Maintainers]
+* link:AUDIT.adoc[Audit Gate]
+* link:AFFIRMATION.adoc[Affirmation]
+* link:CODE_OF_CONDUCT.md[Code of Conduct]
+* link:CONTRIBUTING.md[Contributing Guide]
+* link:https://github.com/hyperpolymath/standards/blob/main/LICENCE-POLICY.adoc[Estate License Policy]
+
+== Changelog
+
+[cols="1,1,1"]
+|===
+| Date | Change | By
+
+| 2026-07-02 | Initial governance model established | @hyperpolymath
+|===

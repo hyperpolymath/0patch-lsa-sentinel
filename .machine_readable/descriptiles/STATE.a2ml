@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# STATE.a2ml — Project state checkpoint
+#
+[metadata]
+project = "0patch-lsa-sentinel"
+version = "0.1.0"
+last-updated = "2026-07-02"
+status = "active"  # active | paused | archived
+
+[project-context]
+name = "0patch-lsa-sentinel"
+purpose = "Detect silent 0patch lsass coverage loss under Windows LSA Protection. A public alert + design plus a SPARK-proved classifier cross-checked across Rust, Idris2, and Zig."
+completion-percentage = 40
+
+[position]
+phase = "design"           # design | implementation | testing | maintenance | archived
+maturity = "alpha"         # experimental | alpha | beta | production | lts
+
+[route-to-mvp]
+milestones = [
+  { name = "Public alert + design (README.md, DESIGN.md)", completion = 100 },
+  { name = "SPARK classifier kernel proved pure + total (gnatprove)", completion = 100 },
+  { name = "Idris2 ABI conformance proofs (totality-checked)", completion = 100 },
+  { name = "Zig C-ABI seam + independent reference", completion = 100 },
+  { name = "Rust host + collectors (registry/eventlog/opatch/snapshot)", completion = 60 },
+  { name = "Windows collectors tested on a real host", completion = 0 },
+  { name = "0patch CLI collector confirmed against a shipped agent", completion = 0 },
+  { name = "End-to-end collect -> classify -> report run on Windows", completion = 0 },
+  { name = "Layer A policy (penned lsa-open machine-class)", completion = 0 },
+  { name = "Layer B sentinel (unsilenceable work-order routing)", completion = 0 },
+]
+
+[blockers-and-issues]
+notes = "No live Windows test host yet; the 0patch CLI/agent surface used by the opatch collector is speculative and unconfirmed."
+
+[critical-next-actions]
+actions = [
+  "Validate the Windows collectors against a real RunAsPPL host with a 0patch agent installed",
+  "Confirm or correct the 0patch CLI collector against a shipped 0patch version",
+  "Demonstrate the end-to-end collect -> classify -> report path on Windows",
+]
+
+[maintenance-status]
+last-run-utc = "never"
+last-result = "unknown"  # unknown | pass | warn | fail
+open-warnings = 0
+open-failures = 0
+
+[ecosystem]
+part-of = ["hyperpolymath estate"]
+depends-on = []

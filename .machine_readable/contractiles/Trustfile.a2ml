@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: MPL-2.0
+# Trustfile — Trust boundaries and integrity invariants for 0patch-lsa-sentinel
+# Author: Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+#
+# Defines what LLM/SLM agents are trusted to do without asking, and integrity
+# invariants that verify the repo has not been tampered with.
+
+@abstract:
+Trust boundaries and integrity checks for 0patch-lsa-sentinel. Defines what AI
+agents may do autonomously and what requires human approval, plus checks that
+verify repository integrity. Default posture is fail-safe-deny.
+@end
+
+## Trust Levels
+
+The 0patch-lsa-sentinel operates at trust level: standard
+
+Trust levels:
+- maximal:    Agent may read, build, test, lint, format, heal freely.
+- standard:   Agent may read, build, test, lint. Licence/audit edits and
+              destructive/external actions require approval.
+- restricted: Agent may read only. All modifications need approval.
+- minimal:    Agent may read specific files only.
+
+Current trust level: standard
+
+## Deny Areas (require explicit human approval)
+
+### licence-files
+- description: LICENSE, LICENSES/, and SPDX headers must never be auto-edited
+- areas:
+  - LICENSE
+  - LICENSES/
+- severity: critical
+- notes: Flag licence drift; do not fix it automatically.
+
+### audit-docs
+- description: Audit documents must never be deleted or rewritten by an agent
+- areas:
+  - AUDIT.adoc
+  - AFFIRMATION.adoc
+  - audits/
+- severity: critical
+
+### verified-kernel
+- description: The SPARK classifier + Idris2 ABI carry proofs; changes need review
+- areas:
+  - core-spark/src/
+  - abi-idris2/src/
+- severity: warning
+
+## Integrity Invariants
+
+### no-secrets-committed
+- description: No credential files in repo
+- run: test ! -f .env && test ! -f credentials.json && test ! -f .env.local
+- severity: critical
+
+### no-private-keys
+- description: No private key files committed
+- run: "! find . -name '*.pem' -o -name 'id_rsa' -o -name 'id_ed25519' 2>/dev/null | grep -q ."
+- severity: critical
+
+## Provenance
+
+### author-correct
+- description: Git author matches expected identity
+- run: "git log -1 --format='%ae' | grep -qE '(hyperpolymath|j\\.d\\.a\\.jewell)'"
+- severity: warning
+
+### license-content
+- description: LICENSE is the canonical MPL-2.0 text
+- run: grep -q 'Mozilla Public License Version 2.0' LICENSE
+- severity: warning
+
+## Fail-Safe
+
+### deny-on-ambiguity
+- description: When a permission or invariant is ambiguous, deny and escalate
+- run: echo "fail-safe-deny is the default posture for this repository"
+- severity: advisory

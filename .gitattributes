@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: MPL-2.0
+# 0patch-lsa-sentinel — RSR-compliant .gitattributes
+
+* text=auto eol=lf
+
+# Source
+*.rs    text eol=lf diff=rust
+*.ada   text eol=lf diff=ada
+*.adb   text eol=lf diff=ada
+*.ads   text eol=lf diff=ada
+*.gpr   text eol=lf
+*.zig   text eol=lf
+*.idr   text eol=lf
+*.ipkg  text eol=lf
+*.h     text eol=lf
+*.a2ml  text eol=lf linguist-language=TOML
+
+# Docs
+*.md    text eol=lf diff=markdown
+*.adoc  text eol=lf
+*.txt   text eol=lf
+
+# Data
+*.json  text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.toml  text eol=lf
+
+# Config
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+.editorconfig  text eol=lf
+Justfile       text eol=lf
+
+# Scripts
+*.sh   text eol=lf
+
+# Binary
+*.png   binary
+*.jpg   binary
+*.gif   binary
+*.pdf   binary
+*.a     binary
+*.zip   binary
+*.gz    binary
+
+# Lock files
+Cargo.lock  text eol=lf -diff

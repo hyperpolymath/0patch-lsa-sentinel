@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# AGENTIC.a2ml — AI agent constraints and capabilities
+# Defines what AI agents can and cannot do in this repository.
+#
+[metadata]
+version = "0.1.0"
+last-updated = "2026-07-02"
+
+[agent-permissions]
+can-edit-source = true
+can-edit-tests = true
+can-edit-docs = true
+can-edit-config = true
+can-create-files = true
+
+[agent-constraints]
+# Hard prohibitions. Violating any of these is a stop-and-escalate event.
+no-automated-licence-edits = true   # never rewrite LICENSE, LICENSES/, or SPDX headers; flag, do not fix
+no-delete-audit-docs = true         # never delete/alter AUDIT.adoc, AFFIRMATION.adoc, or audits/**
+fail-safe-deny = true               # when a permission or invariant is ambiguous, DENY (do not proceed)
+rules = [
+  "Never edit or normalise licence text or SPDX identifiers automatically — surface a flag for human review.",
+  "Never delete, move, or rewrite audit documents (AUDIT.adoc, AFFIRMATION.adoc, audits/assail-classifications.a2ml, audits/audit-residuals.adoc).",
+  "Never present the untested Windows collectors or the speculative 0patch CLI collector as verified.",
+  "Never weaken the FFI fail-safe (out-of-range classifier code MUST decode to Indeterminate, never to 'covered').",
+  "Never commit secrets or credentials.",
+  "When in doubt about a destructive or licence/audit-touching action, fail safe: deny and ask.",
+]
+
+[maintenance-integrity]
+fail-closed = true
+require-evidence-per-step = true
+allow-silent-skip = false
+require-rerun-after-fix = true
+release-claim-requires-hard-pass = true
+
+[methodology]
+instructions-dir = ".machine_readable/bot_directives/"
+default-mode = "hybrid"
+
+[automation-hooks]
+# on-enter: Read 0-AI-MANIFEST.a2ml, then descriptiles/STATE.a2ml, then bot_directives/
+# on-exit: Update STATE.a2ml with session outcomes

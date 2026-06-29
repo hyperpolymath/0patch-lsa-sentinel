@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# META.a2ml — Project meta-level information
+# Architecture decisions, design rationale, governance.
+#
+[metadata]
+version = "0.1.0"
+last-updated = "2026-07-02"
+
+[project-info]
+type = "binary"            # library | binary | monorepo | service | website
+languages = ["rust", "ada-spark", "idris2", "zig"]
+license = "MPL-2.0"
+license-docs = "CC-BY-SA-4.0"
+author = "Jonathan D.A. Jewell (hyperpolymath)"
+
+[architecture-decisions]
+adr = [
+  { id = "ADR-001", title = "Classifier verdict is decided in a SPARK-proved kernel, not the Rust host", status = "accepted", date = "2026-06-25" },
+  { id = "ADR-002", title = "FFI crosses a single isolated, documented, fail-safe unsafe wrapper; out-of-range codes map to Indeterminate", status = "accepted", date = "2026-06-25" },
+  { id = "ADR-003", title = "The ABI contract is cross-checked in four languages (SPARK, Idris2, Rust, Zig) against one shared C-ABI", status = "accepted", date = "2026-06-26" },
+  { id = "ADR-004", title = "The container is operational + observational, never a PPL/CI bypass", status = "accepted", date = "2026-06-25" },
+]
+
+[development-practices]
+build-tool = "just"
+ci-platform = "github-actions"
+
+[design-rationale]
+core = "A patch that cannot be deployed is not the same as a machine that is protected. The sentinel's job is to make a silently-inert state loud, never to make an unsigned loader loadable into a protected process."
+verified-vs-untested = "Proven: the SPARK classifier + Idris2 ABI. Tested: Rust/Zig units. Untested: the Windows collectors, including the speculative 0patch CLI collector."

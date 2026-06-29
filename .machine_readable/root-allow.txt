@@ -1,0 +1,44 @@
+# Canonical root allowlist for 0patch-lsa-sentinel.
+#
+# Lists every entry permitted at the repository root. Anything present at root
+# that is not in this list is drift and must be moved into the appropriate
+# subdirectory (or added here with a justification comment).
+#
+# Used by: scripts/check-root-shape.sh
+# Format: one entry per line; '#' starts a comment; trailing '/' marks a directory.
+
+# ─── Authority / governance files ────────────────────────────────────────────
+README.md                  # entry point — deep-linked from external outreach (do not rename)
+DESIGN.md                  # the public alert + design — deep-linked (do not rename)
+AUDIT.adoc
+AFFIRMATION.adoc
+GOVERNANCE.adoc
+MAINTAINERS.adoc
+CONTRIBUTING.md
+SECURITY.md
+CODE_OF_CONDUCT.md
+CHANGELOG.md
+0-AI-MANIFEST.a2ml
+LICENSE
+LICENSES/                  # REUSE licence texts (MPL-2.0 code / CC-BY-SA-4.0 docs)
+
+# ─── Build entry point ───────────────────────────────────────────────────────
+Justfile                   # cross-toolchain build orchestration
+
+# ─── Conventional dotfiles (tool-required at root) ───────────────────────────
+.editorconfig
+.gitattributes
+.gitignore
+.git/
+.github/                   # workflows + community-health config
+.machine_readable/         # AI manifests, contractiles, descriptiles
+
+# ─── Source / build trees (one per language) ─────────────────────────────────
+core-spark/                # SPARK/Ada verified classifier kernel
+abi-idris2/                # Idris2 ABI conformance proofs
+host-rust/                 # Rust host application + Windows collectors
+ffi-zig/                   # Zig C-ABI seam + independent reference
+audits/                    # accepted structural residuals + assail classifications
+scripts/                   # estate-rule check scripts
+installer/                 # Windows PowerShell install/uninstall for the sentinel
+outreach/                  # on-the-record outreach to ACROS Security / 0patch + status

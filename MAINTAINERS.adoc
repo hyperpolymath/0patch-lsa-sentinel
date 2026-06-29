@@ -1,0 +1,66 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= Maintainers
+:toc: preamble
+
+== Current Maintainers
+
+[cols="2,3,2",options="header"]
+|===
+| Name | Role | Contact
+
+| Jonathan D.A. Jewell | Sole Maintainer | https://github.com/hyperpolymath[@hyperpolymath] · j.d.a.jewell@open.ac.uk
+|===
+
+== Maintainer Responsibilities
+
+As the sole maintainer, all responsibilities apply to @hyperpolymath:
+
+* Reviewing and merging pull requests
+* Triaging issues and feature requests
+* Ensuring code quality and the multi-language proof posture (SPARK kernel,
+  Idris2 ABI, Rust host, Zig FFI)
+* Managing releases and versioning
+* Upholding the project's Code of Conduct
+* Maintaining documentation and the public design/alert
+* Responding to security vulnerabilities
+
+== Contribution Process
+
+This is a sole-maintainer project. All contributions are welcome via:
+
+. **Issues**: Report bugs, request features, ask questions
+. **Pull Requests**: Submit improvements for review
+. **Discussions**: Engage in community discussions
+
+All contributions will be reviewed by the maintainer.
+
+== Decision Making
+
+* Routine decisions (bug fixes, minor improvements): Made by maintainer
+* Significant changes: Discussed in issues before implementation
+* Breaking changes: Announced in advance with migration path
+
+== Becoming a Maintainer
+
+This project currently has a single maintainer. If you're interested in
+becoming a co-maintainer:
+
+. Demonstrate consistent, high-quality contributions
+. Show understanding of project goals and standards
+. Participate constructively in discussions
+. Express interest to the current maintainer
+
+Co-maintainers may be added at the discretion of the current maintainer.
+
+== Contact
+
+* Open a GitHub issue in this repository
+* Email: j.d.a.jewell@open.ac.uk
+* https://github.com/hyperpolymath[@hyperpolymath]
+
+== See Also
+
+* link:GOVERNANCE.adoc[Governance Model]
+* link:CODE_OF_CONDUCT.md[Code of Conduct]
+* link:CONTRIBUTING.md[Contributing Guide]

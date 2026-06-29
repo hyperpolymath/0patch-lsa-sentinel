@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: MPL-2.0
+# Dustfile — Cleanup and hygiene contract for 0patch-lsa-sentinel
+# Author: Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+#
+# Verb:      dust
+# Semantics: What should be cleaned up. Housekeeping, not blockers.
+
+@abstract:
+Cleanup and hygiene items for 0patch-lsa-sentinel. These are maintenance tasks
+that keep the repository clean; they are advisory, not release blockers.
+@end
+
+## Build Artefacts
+
+### no-rust-target
+- description: Rust target/ should not be tracked (it is gitignored)
+- run: test -z "$(git ls-files host-rust/target 2>/dev/null)"
+- severity: warning
+- notes: host-rust/target/ is build output
+
+### no-spark-obj
+- description: SPARK obj/ and lib/ should not be tracked (gitignored)
+- run: test -z "$(git ls-files core-spark/obj core-spark/lib 2>/dev/null)"
+- severity: warning
+
+### no-zig-cache
+- description: Zig cache and zig-out should not be tracked (gitignored)
+- run: test -z "$(git ls-files 'ffi-zig/.zig-cache' ffi-zig/zig-out 2>/dev/null)"
+- severity: warning
+
+### no-idris-build
+- description: Idris2 build/ ttc artefacts should not be tracked (gitignored)
+- run: test -z "$(git ls-files 'abi-idris2/build' 2>/dev/null)"
+- severity: info
+
+## Transient Files
+
+### no-stray-logs
+- description: No stray .log or .tmp files committed
+- run: test -z "$(git ls-files '*.log' '*.tmp' 2>/dev/null)"
+- severity: info
+
+## Format Hygiene
+
+### a2ml-spdx-headers
+- description: Every .a2ml under .machine_readable carries an SPDX header
+- run: "! grep -rL 'SPDX-License-Identifier' .machine_readable --include='*.a2ml' 2>/dev/null | grep -q ."
+- severity: warning

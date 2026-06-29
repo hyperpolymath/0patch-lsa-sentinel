@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# methodology.a2ml — AI agent methodology configuration
+# Declares how agents should approach work in this repository.
+# Read at session start by any AI agent.
+#
+[metadata]
+version = "1.0.0"
+last-updated = "2026-07-02"
+
+[methodology]
+default-mode = "hybrid"       # convergent | divergent | hybrid
+ring-ceiling = 2
+wave-cap = 2
+spike-required = true
+
+[methodology.priority-weights]
+must = 3
+should = 2
+could = 1
+
+[methodology.convergent-budget]
+structural = 70   # new modules, collector wiring, end-to-end integration
+corrective = 20   # bugs, broken imports, stale references
+perfective = 10   # SPDX headers, doc updates, formatting
+
+[methodology.unique-strength]
+description = "A coverage verdict that cannot lie: the silently-inert state is computed in a SPARK-proved, totality-checked kernel and cross-checked in four languages, then routed to an unsilenceable work-order. Deepen the proof and the honesty, do not broaden into a PPL bypass."
+deepen-not-broaden = true
+
+[methodology.divergent-invariants]
+rules = [
+  "Never make an unsigned loader loadable into a protected process — the tool is observational, never a PPL/CI bypass.",
+  "The classifier verdict stays in SPARK; the host must not re-derive 'covered' in unproved Rust.",
+  "FFI stays a single isolated, documented, fail-safe wrapper.",
+  "Do not claim untested collectors are verified.",
+]
+language-invariant = "ada-spark"   # the verdict kernel is SPARK; do not reimplement it in another language
+
+[methodology.known-constraints]
+constraints = [
+  "No live Windows test host yet — the end-to-end path has never run on RunAsPPL.",
+  "The 0patch CLI/agent surface used by host-rust/src/collectors/opatch.rs is speculative and unconfirmed.",
+]
+
+[methodology.state-validation]
+reject-if-contains = ["{{PLACEHOLDER}}", "rsr-template-repo"]
+reject-if-project-name-mismatch = true
+staleness-threshold-days = 90
+fallback-files = ["README.md", "DESIGN.md", ".machine_readable/descriptiles/STATE.a2ml"]

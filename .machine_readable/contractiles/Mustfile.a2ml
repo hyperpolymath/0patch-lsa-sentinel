@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: MPL-2.0
+# Mustfile — Physical state contract for 0patch-lsa-sentinel
+# Author: Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+#
+# What MUST be true about this repository. Hard requirements.
+# Run with: must check
+
+@abstract:
+Physical-state invariants for 0patch-lsa-sentinel. These are hard requirements
+— CI and pre-commit hooks fail if any check fails.
+@end
+
+## File Presence
+
+### license-present
+- description: LICENSE file must exist
+- run: test -f LICENSE
+- severity: critical
+
+### license-texts-present
+- description: REUSE licence texts exist for the dual-licence model
+- run: test -f LICENSES/MPL-2.0.txt && test -f LICENSES/CC-BY-SA-4.0.txt
+- severity: critical
+
+### readme-present
+- description: README.md must exist (deep-linked from external outreach — do not rename)
+- run: test -f README.md
+- severity: critical
+
+### design-present
+- description: DESIGN.md must exist (the public alert — do not rename)
+- run: test -f DESIGN.md
+- severity: critical
+
+### security-policy
+- description: SECURITY.md must exist
+- run: test -f SECURITY.md
+- severity: critical
+
+### ai-manifest
+- description: 0-AI-MANIFEST.a2ml must exist
+- run: test -f 0-AI-MANIFEST.a2ml
+- severity: critical
+
+### governance-docs
+- description: GOVERNANCE.adoc, MAINTAINERS.adoc, AUDIT.adoc, AFFIRMATION.adoc must exist
+- run: test -f GOVERNANCE.adoc && test -f MAINTAINERS.adoc && test -f AUDIT.adoc && test -f AFFIRMATION.adoc
+- severity: critical
+
+### machine-readable-dir
+- description: .machine_readable/ directory must exist
+- run: test -d .machine_readable
+- severity: critical
+
+## Directory Structure
+
+### descriptiles-present
+- description: descriptiles directory exists with required files
+- run: test -f .machine_readable/descriptiles/META.a2ml && test -f .machine_readable/descriptiles/ECOSYSTEM.a2ml && test -f .machine_readable/descriptiles/STATE.a2ml && test -f .machine_readable/descriptiles/PLAYBOOK.a2ml && test -f .machine_readable/descriptiles/AGENTIC.a2ml && test -f .machine_readable/descriptiles/NEUROSYM.a2ml
+- severity: critical
+
+### contractiles-files-present
+- description: The three primary contractile files exist
+- run: test -f .machine_readable/contractiles/Mustfile.a2ml && test -f .machine_readable/contractiles/Trustfile.a2ml && test -f .machine_readable/contractiles/Dustfile.a2ml
+- severity: critical
+
+## Source Trees
+
+### toolchain-trees-present
+- description: All four language trees exist
+- run: test -d core-spark/src && test -d abi-idris2/src && test -d host-rust/src && test -d ffi-zig/src
+- severity: critical
+
+## Verification
+
+### spark-verdict-kernel
+- description: The SPARK classifier source is present (the proved verdict kernel)
+- run: test -f core-spark/src/sentinel-classifier.adb && test -f core-spark/src/sentinel-classifier.ads
+- severity: critical
+
+## Git State
+
+### signed-commits
+- description: HEAD commit must be signed
+- run: git verify-commit HEAD
+- severity: critical

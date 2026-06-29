@@ -1,0 +1,100 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+= AFFIRMATION — 0patch-lsa-sentinel, as of 2026-07-02
+:toc: macro
+:toclevels: 2
+
+_the No-Bullshit file: what we affirm was true and checkable at this moment._
+
+toc::[]
+
+== What this is, and how it works
+
+A short, dated, signed snapshot of what Jonathan D.A. Jewell can honestly and
+verifiably claim about *0patch-lsa-sentinel* at one exact commit. Nothing here
+is marketing and nothing is a promise about the future — those live in
+`README.md` and `DESIGN.md`. This file is the receipt.
+
+It stays trustworthy through three moving parts:
+
+. *Ground truth, not memory.* Every claim below is produced by running the
+  project's own checks (`gnatprove`, `idris2 --build`, `cargo test`, `zig
+  build test`) — not by trusting a status doc.
+. *A frozen anchor.* The file names the commit, branch, UTC date, and toolchain
+  (see <<verifiable-anchor>>); "true" means "true _at this point_".
+. *A real signature.* It is landed by a signed git commit.
+
+We are fallible. This is our best honest belief, not a proof of its own
+correctness. Treat it as a falsifiable claim, not gospel.
+
+== The epistemic contract
+
+This document records the maintainer's *best belief* at the timestamp below. It
+is *not a guarantee of correctness.* The only guarantee is *no intentional
+overclaim*: where something is proven we say "proven"; where it is untested or
+speculative, we say so. You are invited to refute any claim here with a
+counter-example, a failing run, or a contradicting source.
+
+== What we affirm
+
+[cols="3,1,3",options="header"]
+|===
+| Claim | Status | Evidence (command / `file:line`)
+
+| The SPARK classifier (`Sentinel.Classifier.Classify`) is proved pure, total, and free of runtime errors
+| proven
+| `just prove` → `gnatprove -P sentinel_core.gpr --level=2 --report=all` discharges all VCs
+
+| The classifier verdict is cross-checked across four languages (SPARK kernel, Idris2 ABI, Rust host, Zig FFI seam) against one shared contract
+| affirmed
+| `core-spark/`, `abi-idris2/src/Sentinel/ABI.idr`, `host-rust/src/classify.rs`, `ffi-zig/src/sentinel_ffi.zig`; `just all`
+
+| The Idris2 ABI proofs type-check and totality-check
+| affirmed
+| `just abi-check` → `idris2 --build sentinel-abi.ipkg`
+
+| The single Rust `unsafe` block (the FFI call) is isolated, documented, and fail-safe decoded (out-of-range → `Indeterminate`, never a false "covered")
+| affirmed
+| `host-rust/src/ffi.rs`; reviewed in `audits/audit-residuals.adoc` §1
+
+| The design + public alert (why "just turn off LSA Protection" is not good enough) is complete and on the record
+| affirmed
+| `DESIGN.md`, `README.md`
+|===
+
+== What we do NOT claim
+
+* *The Windows collectors have NOT been tested on a real machine.* The
+  registry, event-log, and snapshot collectors in
+  `host-rust/src/collectors/` have only been compiled and unit-reasoned; none
+  has been run against a live Windows host with LSA Protection enabled and a
+  0patch agent installed. Their real-world behaviour is unverified.
+* *The 0patch CLI collector is speculative and unverified.*
+  `host-rust/src/collectors/opatch.rs` assumes a CLI/agent surface that has
+  not been confirmed against any shipped 0patch version. Field names, exit
+  codes, and output formats may be wrong.
+* *No end-to-end run exists.* The full "collect → classify → report" path has
+  never executed on the target platform. The 🟢/🔴/⚪ verdict pipeline is
+  proved at the classifier core but not demonstrated end to end.
+* *This is a DESIGN-stage repository.* The container (Layer A policy / Layer B
+  sentinel) described in `DESIGN.md` is specified, not deployed.
+* *No affiliation with ACROS Security / 0patch.* This is independent,
+  good-faith analysis.
+
+[#verifiable-anchor]
+== Verifiable anchor
+
+[cols="1,3"]
+|===
+| Project | 0patch-lsa-sentinel
+| Repository | https://github.com/hyperpolymath/0patch-lsa-sentinel
+| Commit (SHA) | a44dedc10e576407b059bcaea4e0f724b366b25d (re-anchor on the signing commit)
+| Branch | main
+| Date (UTC) | 2026-07-02
+| Toolchain | gnatprove (SPARK), idris2, cargo/rustc, zig — versions as recorded in `.tool-versions` / CI at signing time
+| Affirmed by | Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+|===
+
+_Landed by a signed git commit. Verify with `git log --show-signature` that the
+anchor SHA above matches the commit that introduced (or last updated) this
+affirmation._

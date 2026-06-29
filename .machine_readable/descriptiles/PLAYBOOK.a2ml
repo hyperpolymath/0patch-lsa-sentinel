@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# PLAYBOOK.a2ml — Operational playbook
+# Build, verify, and release procedures for 0patch-lsa-sentinel.
+#
+[metadata]
+version = "0.1.0"
+last-updated = "2026-07-02"
+
+[build]
+full-gate = "just all"            # build-core, prove, abi-check, ffi, rust host
+spark-build = "just build-core"   # gprbuild -P sentinel_core.gpr
+spark-prove = "just prove"        # gnatprove -P sentinel_core.gpr --level=2 --report=all
+abi-check = "just abi-check"      # idris2 --build sentinel-abi.ipkg
+
+[verify]
+# 1. just prove        — discharge the SPARK classifier postcondition + termination
+# 2. just abi-check    — type/totality-check the Idris2 ABI proofs
+# 3. cargo test        — Rust host unit + integration tests
+# 4. zig build test    — Zig FFI seam tests
+
+[incident-response]
+# 1. Check .machine_readable/descriptiles/STATE.a2ml for current status
+# 2. If a "covered" verdict is suspected false: re-run the classifier proof and
+#    inspect host-rust/src/ffi.rs fail-safe decode (out-of-range -> Indeterminate)
+# 3. Review recent commits and CI results
+
+[release-process]
+# 1. Update version in STATE.a2ml, META.a2ml, CHANGELOG.md
+# 2. Run the full gate `just all` and confirm all proofs discharge
+# 3. Re-anchor AFFIRMATION.adoc honestly (collectors remain untested until a
+#    real Windows host run exists — do NOT claim otherwise)
+# 4. Tag and push a signed commit/tag
+
+[honesty-gate]
+# A release must not claim the Windows collectors are verified, nor that the
+# 0patch CLI collector is confirmed, until an end-to-end run on a real
+# RunAsPPL host exists. See AFFIRMATION.adoc.

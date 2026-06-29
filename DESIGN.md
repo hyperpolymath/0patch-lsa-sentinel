@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+
 # 0patch ↔ Windows LSA Protection — Reverse-Isolation Container
 
 **Status:** DESIGN (no code yet) · **Date:** 2026-06-25 · **Owner:** Jonathan Jewell

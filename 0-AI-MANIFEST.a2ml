@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: MPL-2.0
+# Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+#
+# 0-AI-MANIFEST.a2ml — AI agent work allocation and policy
+#
+[metadata]
+version = "0.1.0"
+last-updated = "2026-07-02"
+
+[project]
+name = "0patch-lsa-sentinel"
+purpose = "Detect silent 0patch lsass coverage loss under Windows LSA Protection: a public design/alert plus a SPARK-proved, multi-language classifier that routes the suppressed coverage signal to an unsilenceable verdict (covered / silently-inert / moot)."
+languages = ["rust", "ada-spark", "idris2", "zig"]
+license-code = "MPL-2.0"
+license-docs = "CC-BY-SA-4.0"
+
+[ai-allocation]
+agents = [
+  { name = "CLAUDE", role = "proofs, compilers, repo-local implementation, CI/CD, formal verification, Rust/Ada-SPARK/Idris2/Zig" },
+  { name = "CHATGPT", role = "prose, the public alert, outreach to ACROS Security / 0patch, standards docs" },
+  { name = "GEMINI", role = "estate audits, cross-repo sweeps, long-context triage" },
+]
+
+[policy]
+rules = [
+  "Do not duplicate tasks across sections. If a task needs multiple LLMs, note the handoff.",
+  "Update THIS file during sessions. Do NOT recreate per-repo TODO files.",
+  "Never edit licence text or SPDX headers automatically — flag, do not fix.",
+  "Never delete or alter audit documents (AUDIT.adoc, AFFIRMATION.adoc, audits/).",
+  "Do not present untested Windows collectors as verified; honesty about coverage is the whole point of this project.",
+]
+
+[work-allocation]
+items = [
+  { agent = "CLAUDE", task = "SPARK classifier proofs, Idris2 ABI, Rust host + collectors, Zig FFI seam, CI gates" },
+  { agent = "CHATGPT", task = "the public alert prose, the direct ask to ACROS Security, README/DESIGN review" },
+  { agent = "GEMINI", task = "cross-repo estate consistency and audit triage" },
+]
