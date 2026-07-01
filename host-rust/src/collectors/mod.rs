@@ -2,8 +2,8 @@
 //! Signal collectors.
 //!
 //! Each collector resolves one of the three signals. The live collectors are
-//! Windows-only and shell out to `reg.exe`, `wevtutil`, and the 0patch CLI
-//! (no native crate dependency). The [`snapshot`] collector reads a small
+//! Windows-only and shell out to `reg.exe` / `wevtutil` or read the 0patch
+//! agent log (no native crate dependency). The [`snapshot`] collector reads a small
 //! key=value file and works on any platform — it powers tests and the
 //! `--snapshot` CLI mode used for triage and CI on non-Windows runners.
 

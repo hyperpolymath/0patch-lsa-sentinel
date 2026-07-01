@@ -60,19 +60,39 @@ counter-example, a failing run, or a contradicting source.
 | The design + public alert (why "just turn off LSA Protection" is not good enough) is complete and on the record
 | affirmed
 | `DESIGN.md`, `README.md`
+
+| The registry collector was validated on a real Windows host (2026-07-02): live `reg.exe` output for `RunAsPPL=0x1` parsed correctly as On
+| affirmed
+| `docs/FIELD-VALIDATION.md` §1; `host-rust/src/collectors/registry.rs`, `parse.rs::parse_runas_ppl`
+
+| The 0patch install paths and the patch-status source (the UTF-16LE agent log `C:\ProgramData\0patch\Logs\0patch.log`, `Patch NNNN applied in application X` lines) are field-confirmed on a real install; the speculative `list-patches` CLI was removed
+| affirmed
+| `docs/FIELD-VALIDATION.md` §2–3; `host-rust/src/collectors/opatch.rs`
 |===
 
 == What we do NOT claim
 
-* *The Windows collectors have NOT been tested on a real machine.* The
-  registry, event-log, and snapshot collectors in
-  `host-rust/src/collectors/` have only been compiled and unit-reasoned; none
-  has been run against a live Windows host with LSA Protection enabled and a
-  0patch agent installed. Their real-world behaviour is unverified.
-* *The 0patch CLI collector is speculative and unverified.*
-  `host-rust/src/collectors/opatch.rs` assumes a CLI/agent surface that has
-  not been confirmed against any shipped 0patch version. Field names, exit
-  codes, and output formats may be wrong.
+* *Field validation is partial, not total.* On 2026-07-02 the collectors were
+  exercised against a real Windows host (LSA Protection ON, live 0patch agent
+  installed) via WSL interop — see `docs/FIELD-VALIDATION.md`. What that
+  session established and what it did not:
+** *Validated:* the registry collector — live `reg.exe` output for
+   `RunAsPPL=0x1` parsed correctly as On.
+** *Confirmed:* the 0patch install paths (`C:\Program Files
+   (x86)\0patch\Agent\`, casing corrected) and the real patch-status source —
+   the UTF-16LE agent log `C:\ProgramData\0patch\Logs\0patch.log`. The former
+   `0patchConsole.exe list-patches` collector was a guess and has been
+   removed; `opatch.rs` was rewritten against the field-confirmed log format.
+** *NOT yet observed live:* the `Present` path of the patch-status collector
+   — no lsass-targeted patch was outstanding on the validation host, so
+   "`Patch NNNN applied in application lsass.exe`" has never been seen in a
+   real log; the "no lsass line in the recent log ⇒ Absent" inference remains
+   a heuristic.
+** *NOT yet observed live:* the CodeIntegrity 3033/3063 block-event path —
+   the `wevtutil` query ran, but no 0patch block event existed on the host
+   (no user-mode lsass injection attempt was occurring), so the
+   positive-match branch of the event-log collector is unverified in the
+   field.
 * *No end-to-end run exists.* The full "collect → classify → report" path has
   never executed on the target platform. The 🟢/🔴/⚪ verdict pipeline is
   proved at the classifier core but not demonstrated end to end.
