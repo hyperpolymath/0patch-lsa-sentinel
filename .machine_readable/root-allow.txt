@@ -42,3 +42,4 @@ audits/                    # accepted structural residuals + assail classificati
 scripts/                   # estate-rule check scripts
 installer/                 # Windows PowerShell install/uninstall for the sentinel
 outreach/                  # on-the-record outreach to ACROS Security / 0patch + status
+flake.nix
