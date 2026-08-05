@@ -36,3 +36,20 @@ items = [
   { agent = "CHATGPT", task = "the public alert prose, the direct ask to ACROS Security, README/DESIGN review" },
   { agent = "GEMINI", task = "cross-repo estate consistency and audit triage" },
 ]
+
+<!-- BEGIN requires-initialisation -->
+
+## PRIORITY ACTION — this repository is not fully initialised
+
+1 substitution token(s) still have no value. **Read
+`REQUIRES_INITIALISATION.md` in the repository root before doing anything
+else here** — it lists every outstanding token, what it means, and which
+files it belongs in.
+
+Do not fabricate values for them, and do not delete the sections that
+contain them to quiet a gate. They are unfilled because they need a
+decision, not because they were overlooked. Resolve what you legitimately
+can, leave the rest, and delete `REQUIRES_INITIALISATION.md` only when
+nothing outstanding remains.
+
+<!-- END requires-initialisation -->
