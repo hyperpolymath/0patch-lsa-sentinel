@@ -63,4 +63,4 @@ Co-maintainers may be added at the discretion of the current maintainer.
 
 * link:GOVERNANCE.adoc[Governance Model]
 * link:CODE_OF_CONDUCT.md[Code of Conduct]
-* link:CONTRIBUTING.md[Contributing Guide]
+* link:.github/CONTRIBUTING.md[Contributing Guide]

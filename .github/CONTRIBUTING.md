@@ -6,7 +6,7 @@ containing the 0patch ↔ Windows LSA Protection conflict. Contributions —
 corrections, evidence, code, and review — are welcome.
 
 Please also read the [Code of Conduct](CODE_OF_CONDUCT.md), the
-[Governance model](GOVERNANCE.adoc), and the [Security
+[Governance model](../GOVERNANCE.adoc), and the [Security
 policy](SECURITY.md).
 
 ## Ground truth first
@@ -18,7 +18,7 @@ discipline applies to contributions:
   result.
 
 - Distinguish proven (SPARK/Idris2), tested (Rust/Zig), and untested
-  (the Windows collectors) — see [`AFFIRMATION.adoc`](AFFIRMATION.adoc).
+  (the Windows collectors) — see [`AFFIRMATION.adoc`](../AFFIRMATION.adoc).
 
 - A patch that cannot be deployed is not the same as a machine that is
   protected; do not let a contribution imply otherwise.
