@@ -75,7 +75,7 @@ source (vendor KB, Event ID, registry key) where you can.
 4.  Run the relevant checks locally (`just` `prove`, `just` `abi-check`,
     `cargo` `test`, `zig` `build` `test`).
 
-5.  Sign your commits (SSH or GPG).
+5.  Sign your commits with SSH (see Signed commits).
 
 6.  Follow [Conventional Commits](https://www.conventionalcommits.org/).
 
