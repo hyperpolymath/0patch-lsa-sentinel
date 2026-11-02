@@ -29,7 +29,7 @@ pub trait SignalSource {
 pub fn collect_live() -> Result<Signals, String> {
     let protection = registry::lsa_protection()?;
     let loader = eventlog::loader_presence(protection)?;
-    let patches = opatch::lsass_patch_status()?;
+    let patches = opatch::lsass_patch_status(loader)?;
     Ok(Signals { protection, loader, patches })
 }
 

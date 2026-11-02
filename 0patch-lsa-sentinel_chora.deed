@@ -1,0 +1,120 @@
+;; SPDX-License-Identifier: MPL-2.0
+;
+; Repo deed of 0patch-lsa-sentinel (one-deed-per-repo doctrine, D308 / D312;
+; standards#837; ADR-009 egress profile).
+;
+; Note on live .machine_readable/descriptiles/*.a2ml: kept in place per D313
+; and standards#1362 until downstream consumers (openssf-compliance.yml and
+; Hypatia SD007-SD009) switch to reading the repo deed directly.
+(repo-deed
+  :schema-version "1.0.0"
+  :canonical-name "0patch-lsa-sentinel"
+  :beholding-chora #u5"estate/chora"
+  :repo-uuid #u5"github.com/hyperpolymath/0patch-lsa-sentinel"
+
+  (identity
+    :primary-forge github
+    :owner "hyperpolymath"
+    :prefixed-name "sc-0patch-lsa-sentinel")
+
+  (clade
+    :primary sc
+    :primary-name "Security"
+    :secondary (fv)
+    :assigned "2026-06-25"
+    :rationale "Security (`sc`) primary: detects silent 0patch lsass.exe micropatch coverage loss under Windows LSA Protection (`RunAsPPL`) and converts a dismissable popup into an unsilenceable event-log verdict. Formal Verification & Proofs (`fv`) secondary: the 27-state decision kernel is proved pure and total in SPARK/Ada and ABI-checked in Idris2.")
+
+  (forges
+    :github "hyperpolymath/0patch-lsa-sentinel")
+
+  (lineage
+    :type standalone
+    :parent ""
+    :born "2026-06-25"
+    :previous-names ())
+
+  (status
+    :phase active
+    :since "2026-06-25"
+    :present #t
+    :aliases ()
+    :merged-into ""
+    :superseded-by ""
+    :successors ()
+    :ended ""
+    (history
+      (entry :phase active :since "2026-06-25" :note "public alert, reverse-isolation container design, and four-language verified classifier core")))
+
+  (maturity
+    :level alpha
+    :since "2026-07-02")
+
+  (ecosystem
+    :project "0patch-lsa-sentinel"
+    :ecosystem "hyperpolymath"
+    :position-type "security-tool"
+    :purpose "Public alert, reverse-isolation container design, and formally verified four-language watcher for containing the 0patch <-> Windows LSA Protection (`RunAsPPL`) conflict so silent lsass.exe micropatch coverage loss becomes loud."
+    :not ("a way to bypass Windows PPL or LSA Protection"
+          "a 0patch or ACROS Security product, or affiliated with ACROS Security"
+          "related to the unrelated github.com/0patch namesake account")
+    :pipeline-position "standalone-tool"
+    :chain "SPARK kernel -> Zig C-ABI seam -> Rust host & Windows collectors (Idris2 ABI proofs)"
+    :coordination standards
+    (related :name "standards" :relationship standard-source :notes "Canonical governance, workflow, signing, and DEED specifications in metadatastician/standards."))
+
+  (meta
+    :version "0.1.0"
+    :last-updated "2026-11-02"
+    :type binary
+    :languages (rust ada-spark idris2 zig)
+    :license MPL-2.0
+    :license-docs CC-BY-SA-4.0
+    :author "Jonathan D.A. Jewell (hyperpolymath)"
+    :build-tool just
+    :container-runtime podman
+    :ci-platform github-actions)
+
+  (agentic
+    :version "0.1.0"
+    :last-updated "2026-11-02"
+    (permissions :source #t :tests #t :docs #t :config #t :create-files #t)
+    (integrity
+      :fail-closed #t
+      :require-evidence-per-step #t
+      :allow-silent-skip #f
+      :require-rerun-after-fix #t
+      :release-claim-requires-hard-pass #t)
+    (methodology :instructions-clause "bot-directives" :default-mode hybrid))
+
+  ; RSR v2.0 capability declaration (checked by metadatastician/standards
+  ; scripts/check-rsr-profile.sh against template-capability-gates.toml).
+  (rsr-profile
+    :version "1.0.0"
+    :spec "rsr-criteria-v2"
+    :declares-against "2.1.3"
+    :capabilities (
+      "rust"
+      "zig"
+      "idris2"
+      "bash"
+      "cli"
+      "library"
+      "docs-site"
+      "container"
+      "published-package"
+      "governance-tier"
+    )
+    (notes
+      :omitted-rationale "Capabilities `ffi`, `abi`, and `formal-proofs` in template-capability-gates.toml gate the rsr-template-repo directory spellings (`src/interface/ffi/`, `src/interface/abi/`, `verification/proofs/`), whereas this repository uses dedicated top-level language roots (`core-spark/`, `abi-idris2/`, `ffi-zig/`, `host-rust/`). `reproducible-build` (Guix manifest) is not yet wired."))
+
+  ; ADR-009 egress attestation for secret-bearing workflow jobs (Hypatia RE001).
+  (egress
+    :policy "standards ADR-009"
+    (job
+      :workflow ".github/workflows/release.yml"
+      :job "windows-release"
+      :secrets ("WINDOWS_PFX_BASE64" "WINDOWS_PFX_PASSWORD")
+      :endpoints ("timestamp.digicert.com")
+      :enforcement none
+      :reason "Optional Authenticode signing of lsa-sentinel.exe via Windows SDK signtool.exe when WINDOWS_PFX_BASE64 is configured; contacts DigiCert RFC 3161 timestamp server."))
+)

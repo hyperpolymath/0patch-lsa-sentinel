@@ -65,7 +65,7 @@ RUN apk add --no-cache rust-1.89 gcc zig
 WORKDIR /build
 
 # --- Rust crate (host-rust/): the real, shipped artifact ---
-COPY host-rust/Cargo.toml host-rust/Cargo.lock ./host-rust/
+COPY host-rust/Cargo.toml host-rust/Cargo.lock host-rust/build.rs ./host-rust/
 COPY host-rust/src ./host-rust/src
 # benches/ must be present even for a plain `cargo build`: the
 # manifest declares an explicit [[bench]] target and Cargo validates
@@ -74,7 +74,7 @@ COPY host-rust/src ./host-rust/src
 COPY host-rust/benches ./host-rust/benches
 
 RUN cd host-rust && \
-    cargo build --release --bin lsa-sentinel && \
+    cargo build --locked --release --bin lsa-sentinel && \
     cp target/release/lsa-sentinel /build/lsa-sentinel
 
 # --- Zig FFI crate (ffi-zig/): active build-only verification ---

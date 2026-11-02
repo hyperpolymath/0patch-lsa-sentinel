@@ -9,7 +9,7 @@
 //! are modelled on real tool output; see each function's note on how confident
 //! we are that the format matches reality. The `reg.exe` and 0patch-log
 //! formats were field-confirmed on a live Windows host on 2026-07-02 (see
-//! `docs/FIELD-VALIDATION.md`).
+//! `docs/FIELD-VALIDATION.adoc`).
 
 use crate::model::{LoaderPresence, LsaProtection, PatchStatus};
 
@@ -69,36 +69,48 @@ pub fn loader_from_signals(protection: LsaProtection, recent_block: bool) -> Loa
 }
 
 /// Parse the 0patch agent log (`C:\ProgramData\0patch\Logs\0patch.log`) for an
-/// outstanding lsass-targeted patch application.
+/// outstanding lsass-targeted patch application, conditioned on [`LoaderPresence`].
 ///
 /// FIELD-CONFIRMED FORMAT (2026-07-02, real install, see
-/// `docs/FIELD-VALIDATION.md`): the log is UTF-16LE text whose
-/// patch-application lines look exactly like
+/// `docs/FIELD-VALIDATION.adoc`): the log is UTF-16LE text whose
+/// patch-application lines look like
 /// `2026/07/01 21:41:35 Patch 2088 applied in application wevtutil.exe`.
-/// An lsass-targeted application would therefore read
+/// An lsass-targeted application reads
 /// `Patch NNNN applied in application lsass.exe`.
 ///
-/// Semantics:
-/// * `Present` — any `applied in application lsass.exe` line exists.
-/// * `Absent`  — the log decoded fine and is non-trivial (non-empty text) but
-///   contains no such line.
-/// * `Unknown` — empty / trivial text (the caller also maps a missing or
-///   undecodable file to `Unknown`).
+/// Right-censorship invariant (why `loader` is a required input):
+/// `0patch.log` records *runtime patch applications* after `0patchLoader`
+/// injects into a target process. When `loader != LoaderPresence::Loaded`
+/// (in particular when LSA Protection `RunAsPPL` is `On`, or a CodeIntegrity
+/// block event was observed), the kernel prevents `0patchLoader` from entering
+/// `lsass.exe`, so no new `applied in application lsass.exe` line can ever be
+/// written even if a critical `lsass.exe` micropatch is present in the local
+/// catalog. Treating the absence of an `lsass.exe` line in a blocked host's
+/// log as [`PatchStatus::Absent`] would make the classifier return a false
+/// [`crate::model::Verdict::Moot`] (exit 0) on the very hosts this sentinel
+/// exists to protect.
 ///
-/// HONESTY NOTE: while the *line format* is field-confirmed, the inference
-/// "no lsass line in the recent log ⇒ no lsass patch is being applied"
-/// (`Absent`) is a heuristic — the Present path has never been observed live
-/// because no lsass-targeted 0patch patch was outstanding on the validation
-/// host. Anything ambiguous stays `Unknown`, so the classifier errs toward
-/// INDETERMINATE (investigate), never a false all-clear.
-pub fn parse_opatch_log(log_text: &str) -> PatchStatus {
+/// Semantics:
+/// * `Present` — any `applied in application lsass.exe` line exists in the
+///   decoded window (including historical applications prior to enabling
+///   `RunAsPPL`, which proves a local `lsass.exe` patch exists and immediately
+///   surfaces `BLOCKED-INERT` once `RunAsPPL` is `On`).
+/// * `Absent`  — `loader == LoaderPresence::Loaded` (the loader is unblocked
+///   and able to reach `lsass.exe`) AND the log decoded with non-empty activity
+///   containing no `applied in application lsass.exe` line.
+/// * `Unknown` — empty / trivial text, OR no `lsass.exe` line while
+///   `loader != LoaderPresence::Loaded` (the log is right-censored for
+///   `lsass.exe`; fails safe to `INDETERMINATE`, exit 1).
+pub fn parse_opatch_log(log_text: &str, loader: LoaderPresence) -> PatchStatus {
     let lower = log_text.to_ascii_lowercase();
     if lower.contains("applied in application lsass.exe") {
         PatchStatus::Present
     } else if log_text.trim().is_empty() {
         PatchStatus::Unknown
-    } else {
+    } else if loader == LoaderPresence::Loaded {
         PatchStatus::Absent
+    } else {
+        PatchStatus::Unknown
     }
 }
 
@@ -198,7 +210,7 @@ mod tests {
     }
 
     // ---- 0patch log parsing (line formats are verbatim from a real install,
-    // ---- 2026-07-02; see docs/FIELD-VALIDATION.md) ----
+    // ---- 2026-07-02; see docs/FIELD-VALIDATION.adoc) ----
 
     /// Real (field-captured) log lines, no lsass patch outstanding.
     const REAL_LOG_NO_LSASS: &str = "\
@@ -206,22 +218,69 @@ mod tests {
 2026/07/01 21:41:35 Patch 1999 applied in application conhost.exe\n";
 
     #[test]
-    fn opatch_log_present_on_lsass_application() {
+    fn opatch_log_present_on_lsass_application_when_loaded() {
         let log = format!(
             "{REAL_LOG_NO_LSASS}2026/07/01 21:42:00 Patch 2101 applied in application lsass.exe\n"
         );
-        assert_eq!(parse_opatch_log(&log), PatchStatus::Present);
+        assert_eq!(
+            parse_opatch_log(&log, LoaderPresence::Loaded),
+            PatchStatus::Present
+        );
     }
 
     #[test]
-    fn opatch_log_absent_when_no_lsass_line() {
-        assert_eq!(parse_opatch_log(REAL_LOG_NO_LSASS), PatchStatus::Absent);
+    fn opatch_log_present_even_when_loader_now_blocked() {
+        // Historical application in the 2 MiB window before RunAsPPL was turned
+        // on proves an lsass patch is in the local catalog -> Present, allowing
+        // the classifier to raise BLOCKED-INERT immediately.
+        let log = format!(
+            "{REAL_LOG_NO_LSASS}2026/07/01 21:42:00 Patch 2101 applied in application lsass.exe\n"
+        );
+        assert_eq!(
+            parse_opatch_log(&log, LoaderPresence::Blocked),
+            PatchStatus::Present
+        );
+        assert_eq!(
+            parse_opatch_log(&log, LoaderPresence::Unknown),
+            PatchStatus::Present
+        );
+    }
+
+    #[test]
+    fn opatch_log_absent_only_when_loader_loaded() {
+        assert_eq!(
+            parse_opatch_log(REAL_LOG_NO_LSASS, LoaderPresence::Loaded),
+            PatchStatus::Absent
+        );
+    }
+
+    #[test]
+    fn opatch_log_unknown_when_loader_blocked_or_unknown() {
+        // Regression test for the right-censorship defect: when RunAsPPL (or a
+        // CodeIntegrity block) keeps 0patchLoader out of lsass.exe, 0patch.log
+        // never records an lsass application even if an lsass micropatch is
+        // synced locally. Must return Unknown (fail-safe -> INDETERMINATE),
+        // NEVER Absent (which would emit a false MOOT exit-0 all-clear).
+        assert_eq!(
+            parse_opatch_log(REAL_LOG_NO_LSASS, LoaderPresence::Blocked),
+            PatchStatus::Unknown
+        );
+        assert_eq!(
+            parse_opatch_log(REAL_LOG_NO_LSASS, LoaderPresence::Unknown),
+            PatchStatus::Unknown
+        );
     }
 
     #[test]
     fn opatch_log_unknown_on_empty() {
-        assert_eq!(parse_opatch_log(""), PatchStatus::Unknown);
-        assert_eq!(parse_opatch_log("   \n  "), PatchStatus::Unknown);
+        for loader in [
+            LoaderPresence::Loaded,
+            LoaderPresence::Blocked,
+            LoaderPresence::Unknown,
+        ] {
+            assert_eq!(parse_opatch_log("", loader), PatchStatus::Unknown);
+            assert_eq!(parse_opatch_log("   \n  ", loader), PatchStatus::Unknown);
+        }
     }
 
     #[test]
@@ -229,8 +288,18 @@ mod tests {
         // e.g. a service-log line mentioning lsass without an application —
         // only the exact "applied in application lsass.exe" phrase counts.
         assert_eq!(
-            parse_opatch_log("2026/07/01 21:41:35 Scanning lsass.exe modules\n"),
+            parse_opatch_log(
+                "2026/07/01 21:41:35 Scanning lsass.exe modules\n",
+                LoaderPresence::Loaded
+            ),
             PatchStatus::Absent
+        );
+        assert_eq!(
+            parse_opatch_log(
+                "2026/07/01 21:41:35 Scanning lsass.exe modules\n",
+                LoaderPresence::Blocked
+            ),
+            PatchStatus::Unknown
         );
     }
 
@@ -289,6 +358,13 @@ mod tests {
     fn decode_then_parse_end_to_end() {
         let bytes = utf16le(REAL_LOG_NO_LSASS, true);
         let text = decode_utf16le(&bytes).expect("decodes");
-        assert_eq!(parse_opatch_log(&text), PatchStatus::Absent);
+        assert_eq!(
+            parse_opatch_log(&text, LoaderPresence::Loaded),
+            PatchStatus::Absent
+        );
+        assert_eq!(
+            parse_opatch_log(&text, LoaderPresence::Blocked),
+            PatchStatus::Unknown
+        );
     }
 }

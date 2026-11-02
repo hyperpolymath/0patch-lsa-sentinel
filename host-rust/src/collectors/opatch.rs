@@ -2,7 +2,7 @@
 //! Outstanding lsass-targeted patch status from the 0patch agent (Windows).
 //!
 //! FIELD-CONFIRMED source (2026-07-02, real install — see
-//! `docs/FIELD-VALIDATION.md`): the authoritative local record of patch
+//! `docs/FIELD-VALIDATION.adoc`): the authoritative local record of patch
 //! applications is the agent log `C:\ProgramData\0patch\Logs\0patch.log`
 //! (UTF-16LE), with lines like
 //! `2026/07/01 21:41:35 Patch 2088 applied in application wevtutil.exe`.
@@ -15,18 +15,21 @@
 //! grows to ~10 MB), decodes UTF-16LE, and delegates the verdict to the pure,
 //! cross-platform-tested [`crate::collectors::parse::parse_opatch_log`].
 //!
-//! HONESTY NOTE: the log *format* is field-confirmed, but the inference
-//! "no `lsass.exe` line in the recent log ⇒ `Absent`" is a heuristic — the
-//! `Present` path has never been observed live (no lsass-targeted patch was
-//! outstanding on the validation host). Fail-safe behaviour is preserved:
-//! missing / unreadable / undecodable log ⇒ `Unknown`, so the classifier
-//! reports INDETERMINATE (investigate) rather than a false all-clear. The
-//! agent install directory (real casing: `...\0patch\Agent`, confirmed
-//! on-disk) is probed only to distinguish "0patch not installed" from
-//! "installed but no readable log" in the diagnostic message.
+//! RIGHT-CENSORSHIP & HONESTY NOTE: `0patch.log` records *applied* patches, so
+//! when `loader != LoaderPresence::Loaded` (for instance under `RunAsPPL=On`),
+//! the kernel blocks `0patchLoader` before any `lsass.exe` patch can apply and
+//! be logged. Consequently, a log without an `lsass.exe` line only justifies
+//! `Absent` when `loader == LoaderPresence::Loaded`; when the loader is
+//! `Blocked` or `Unknown` (and no prior `lsass.exe` application appears in the
+//! tail window), the collector returns `Unknown` so the classifier reports
+//! `INDETERMINATE` (exit 1, investigate) rather than a false `MOOT` (exit 0).
+//! Missing / unreadable / undecodable logs likewise yield `Unknown`. The agent
+//! install directory (real casing: `...\0patch\Agent`, confirmed on-disk) is
+//! probed only to distinguish "0patch not installed" from "installed but no
+//! readable log" in the diagnostic message.
 
 use crate::collectors::parse::{decode_utf16le, parse_opatch_log};
-use crate::model::PatchStatus;
+use crate::model::{LoaderPresence, PatchStatus};
 use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
@@ -39,9 +42,9 @@ const AGENT_DIR: &str = r"C:\Program Files (x86)\0patch\Agent";
 /// Read at most this much of the log tail (the file grows to ~10 MB).
 const TAIL_CAP: u64 = 2 * 1024 * 1024;
 
-pub fn lsass_patch_status() -> Result<PatchStatus, String> {
+pub fn lsass_patch_status(loader: LoaderPresence) -> Result<PatchStatus, String> {
     match read_log_tail_utf16le(Path::new(LOG_PATH), TAIL_CAP) {
-        Some(text) => Ok(parse_opatch_log(&text)),
+        Some(text) => Ok(parse_opatch_log(&text, loader)),
         None => {
             // No decodable log. Distinguish the two Unknown flavours for the
             // operator, but stay fail-safe either way.
@@ -65,13 +68,22 @@ pub fn lsass_patch_status() -> Result<PatchStatus, String> {
 ///
 /// The seek offset is aligned down to an even byte so the tail window starts
 /// on a UTF-16 code-unit boundary (the log starts with a 2-byte BOM, so code
-/// units sit at even offsets). Returns `None` on any I/O or decode failure.
+/// units sit at even offsets). Uses `Read::take(cap)` so concurrent appends by
+/// `0patchService` cannot grow the read buffer past `cap` or leave an odd
+/// trailing byte if a 2-byte code unit is mid-flush. Returns `None` on any I/O
+/// or decode failure.
 fn read_log_tail_utf16le(path: &Path, cap: u64) -> Option<String> {
     let mut f = File::open(path).ok()?;
     let len = f.metadata().ok()?.len();
     let start = len.saturating_sub(cap) & !1; // even-align the window start
     f.seek(SeekFrom::Start(start)).ok()?;
-    let mut bytes = Vec::with_capacity((len - start) as usize);
-    f.read_to_end(&mut bytes).ok()?;
+    let expected = len.saturating_sub(start).min(cap) as usize;
+    let mut bytes = Vec::with_capacity(expected);
+    f.take(cap).read_to_end(&mut bytes).ok()?;
+    // If a concurrent append caught a UTF-16 code unit half-written at EOF,
+    // trim the single trailing byte rather than failing the whole window.
+    if bytes.len() % 2 != 0 {
+        bytes.pop();
+    }
     decode_utf16le(&bytes)
 }

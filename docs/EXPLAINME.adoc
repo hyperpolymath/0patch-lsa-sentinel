@@ -1,0 +1,65 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Architecture & Repository Tour — 0patch-lsa-sentinel
+:toc: preamble
+
+== Purpose
+
+`0patch-lsa-sentinel` turns a silent coverage gap into an unsilenceable signal.
+When Windows LSA Protection (`RunAsPPL`) is enabled, Windows Code Integrity
+blocks unsigned or non-PPL modules — including `0patchLoaderX64.dll` — from
+loading into `lsass.exe`. Any 0patch micropatches targeting `lsass.exe` stop
+applying, and once the operator ticks _"Don't show this message again"_ on the
+desktop popup, no recurring warning remains.
+
+See link:../DESIGN.adoc[`DESIGN.adoc`] for the public alert, containment model,
+and vendor questions, and link:../AFFIRMATION.adoc[`AFFIRMATION.adoc`] for the
+dated verification receipt.
+
+== Four-Language Layout
+
+[cols="1,2,3",options="header"]
+|===
+| Directory | Toolchain | Role
+
+| `core-spark/`
+| SPARK / Ada (`gnatprove`, `gprbuild`)
+| Safety-critical decision kernel (`Sentinel.Classifier.Classify`) and C-ABI
+  export (`Sentinel.Abi.Classify_C` -> `sentinel_classify`). Proved pure,
+  total, and postcondition-conforming across all `3 × 3 × 3 = 27` input triples.
+
+| `abi-idris2/`
+| Idris2 (`%default total`)
+| Dependent-type ABI specification (`Sentinel.ABI`) proving integer discriminant
+  round-trips (`decode . encode = Just`) and truth-table alignment with SPARK.
+
+| `ffi-zig/`
+| Zig 0.15
+| Publishes the canonical C header (`ffi-zig/include/sentinel.h`) and an
+  independent reference classifier (`sentinel_classify_ref`) with exhaustive
+  property tests.
+
+| `host-rust/`
+| Rust 2021 (zero runtime crate dependencies)
+| CLI binary (`lsa-sentinel`), cross-platform `--snapshot` evaluator, single
+  isolated `unsafe` FFI wrapper (`src/ffi.rs`, audited in
+  `audits/audit-residuals.adoc`), pure parsers (`src/collectors/parse.rs`), and
+  Windows live collectors (`reg.exe`, `wevtutil.exe`, and bounded UTF-16LE tail
+  reads of `C:\ProgramData\0patch\Logs\0patch.log`).
+|===
+
+== Supporting Directories
+
+* `installer/` — Elevated PowerShell scheduled-task installer and uninstaller
+  routing verdicts to the Windows Application Event Log (`lsa-sentinel` source:
+  Event ID `1001` Error = `BLOCKED-INERT`, `1002` Warning = `INDETERMINATE`,
+  `1000` Information = `OPEN-COVERED` / `MOOT`).
+* `docs/FIELD-VALIDATION.adoc` — Empirical results from exercising the Windows
+  collectors against a real `RunAsPPL=0x1` Windows host with a licensed 0patch
+  agent installed, plus the right-censorship rule on `0patch.log`.
+* `audits/` — Accepted structural residuals (`audit-residuals.adoc`) and
+  `panic-attack` (`assail`) classifications (`assail-classifications.a2ml`).
+* `container/` & `Containerfile` — Sealed multi-stage Wolfi/Chainguard container
+  build verifying `host-rust` and `ffi-zig` in an unprivileged runtime image.
+* `outreach/` — On-the-record questions and outreach tracking for ACROS
+  Security / 0patch.

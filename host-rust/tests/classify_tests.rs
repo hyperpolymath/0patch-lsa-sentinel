@@ -100,6 +100,53 @@ fn spot_checks() {
     }
 }
 
+/// Collector-to-classifier safety invariant: when LSA Protection is On (or a
+/// CodeIntegrity loader-block event is present), `0patch.log` is right-censored
+/// for `lsass.exe` and MUST NEVER produce a silent exit-0 verdict (`Moot` or
+/// `OpenCovered`) for any possible log contents.
+#[test]
+fn protected_or_blocked_host_never_silently_clears_from_opatch_log() {
+    use lsa_sentinel::collectors::parse::{loader_from_signals, parse_opatch_log};
+
+    let sample_logs = [
+        "",
+        "   \n",
+        "2026/07/01 21:41:35 0patch Service started\n",
+        "2026/07/01 21:41:35 Patch 2088 applied in application wevtutil.exe\n",
+        "2026/07/01 21:42:00 Patch 2101 applied in application lsass.exe\n",
+    ];
+    let blocked_hosts = [
+        (LsaProtection::On, false),
+        (LsaProtection::On, true),
+        (LsaProtection::Off, true),
+        (LsaProtection::Unknown, false),
+        (LsaProtection::Unknown, true),
+    ];
+
+    for (protection, recent_block) in blocked_hosts {
+        let loader = loader_from_signals(protection, recent_block);
+        for log in sample_logs {
+            let patches = parse_opatch_log(log, loader);
+            let verdict = classify(Signals::new(protection, loader, patches));
+            assert_ne!(
+                verdict,
+                Verdict::Moot,
+                "false Moot on blocked/unknown host ({protection:?}, block={recent_block}) for log={log:?}"
+            );
+            assert_ne!(
+                verdict,
+                Verdict::OpenCovered,
+                "false OpenCovered on blocked/unknown host ({protection:?}, block={recent_block}) for log={log:?}"
+            );
+            assert_ne!(
+                verdict.exit_code(),
+                0,
+                "exit code 0 on blocked/unknown host ({protection:?}, block={recent_block})"
+            );
+        }
+    }
+}
+
 /// Differential check against the SPARK-proved object code, when linked.
 #[cfg(feature = "verified-core")]
 #[test]

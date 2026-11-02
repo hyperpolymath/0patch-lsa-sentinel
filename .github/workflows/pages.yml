@@ -35,7 +35,18 @@ jobs:
           if [ ! -f src/index.md ] && [ -f README.md ]; then
             cp README.md src/index.md
           elif [ ! -f src/index.md ]; then
-            echo "# ${GITHUB_REPOSITORY}" > src/index.md
+            cat > src/index.md <<EOF
+          # ${GITHUB_REPOSITORY#*/}
+
+          Public alert, reverse-isolation container design, and formally verified
+          four-language classifier for detecting silent 0patch \`lsass.exe\`
+          micropatch coverage loss under Windows LSA Protection (\`RunAsPPL\`).
+
+          - Repository: <https://github.com/${GITHUB_REPOSITORY}>
+          - Entry point: [README.adoc](https://github.com/${GITHUB_REPOSITORY}/blob/main/README.adoc)
+          - Design & alert: [DESIGN.adoc](https://github.com/${GITHUB_REPOSITORY}/blob/main/DESIGN.adoc)
+          - Verification receipt: [AFFIRMATION.adoc](https://github.com/${GITHUB_REPOSITORY}/blob/main/AFFIRMATION.adoc)
+          EOF
           fi
           ./.ddraig-ssg/build/exec/ddraig build src _site https://hyperpolymath.github.io/${GITHUB_REPOSITORY#*/}
       - name: Upload artifact

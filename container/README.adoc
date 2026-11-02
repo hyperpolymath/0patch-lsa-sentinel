@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: CC-BY-SA-4.0
+// SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
+= Container Packaging — 0patch-lsa-sentinel
+
+The sealed multi-stage OCI build lives at link:../Containerfile[`Containerfile`]
+in the repository root (Chainguard `wolfi-base` builder compiling `host-rust/`
+with `--locked --release` and verifying `ffi-zig/`, copied into a non-root
+`cgr.dev/chainguard/glibc-dynamic` runtime image for `--snapshot` evaluation).
+
+[source,bash]
+----
+podman build -t 0patch-lsa-sentinel:verify -f Containerfile .
+podman run --rm 0patch-lsa-sentinel:verify --snapshot /path/to/host.snap
+----
+
+Live Windows collection (`reg.exe`, `wevtutil.exe`, `0patch.log`) runs natively
+on Windows hosts via `installer/Install-LsaSentinel.ps1`; the container image
+exercises and packages the portable `--snapshot` classifier CLI.

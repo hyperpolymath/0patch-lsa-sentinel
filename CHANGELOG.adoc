@@ -8,6 +8,37 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 === https://github.com/hyperpolymath/0patch-lsa-sentinel/compare/v0.1.0...HEAD[Unreleased]
 
+==== Fixed
+
+* *Collector right-censorship safety defect (`+host-rust/+`)*: conditioned
+  `+parse_opatch_log+` and `+opatch::lsass_patch_status+` on
+  `+LoaderPresence+` so hosts with LSA Protection (`+RunAsPPL=On+`) or an
+  observed CodeIntegrity block yield `+PatchStatus::Unknown+` →
+  `+INDETERMINATE+` (exit `1`, Warning `1002`) instead of a false
+  `+PatchStatus::Absent+` → `+MOOT+` all-clear (exit `0`) when no
+  `+lsass.exe+` application appears in `+0patch.log+`. Bounded log tail
+  reads with `+Read::take+` against concurrent appends.
+* *CI, standards coordinates, and Dependabot*: migrated reusable workflow
+  coordinates to `+metadatastician/standards+`, replaced the invalid
+  `+codeql-action+` pin with `+codeql-reusable.yml+` (`+actions+` +
+  `+rust+`), removed `+secrets: inherit+` from `+secret-scanner.yml+`
+  (standards#1108 §6b), fixed `+release.yml+` packaging path
+  (`+installer/README.adoc+`), added `+rust-ci.yml+` cross-language
+  verification (Rust portable + Windows target, SPARK/Ada C-ABI
+  differential test, Zig FFI, Idris2 ABI proofs, DEED conformance, SPARK
+  theatre gate), and scoped `+.github/dependabot.yml+` to `+github-actions+`
+  and `+/host-rust+`.
+* *Root shape, initialisation marker, and documentation links*: lowercased
+  the `+Justfile+` `+release version:+` parameter to eliminate the false
+  uppercase Just recipe parameter placeholder trigger, removed
+  `+REQUIRES_INITIALISATION.adoc+` and duplicate `+MAINTAINERS+`, updated
+  `+.machine_readable/root-allow.txt+`, reconciled front-page status and
+  internal `.adoc` links across `+README.adoc+`, `+DESIGN.adoc+`,
+  `+MAINTAINERS.adoc+`, `+CONTRIBUTING.adoc+`, `+installer/README.adoc+`,
+  and `+outreach/STATUS.adoc+`, and added `+0patch-lsa-sentinel_chora.deed+`,
+  `+docs/EXPLAINME.adoc+`, `+.github/SECURITY.md+`, and
+  `+.well-known/security.txt+`.
+
 === https://github.com/hyperpolymath/0patch-lsa-sentinel/releases/tag/v0.1.0[0.1.0] - 2026-07-02
 
 ==== Added

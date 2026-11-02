@@ -1,0 +1,142 @@
+# SPDX-License-Identifier: MPL-2.0
+# Cross-language verification gate for 0patch-lsa-sentinel:
+#   1. Rust host crate (check, clippy -D warnings, unit + truth-table tests)
+#   2. Windows cross-target check (typechecks #[cfg(windows)] live collectors)
+#   3. SPARK/Ada kernel build + Zig C-ABI FFI build/tests + C-ABI differential test
+#   4. Idris2 ABI conformance & totality proofs
+#   5. DEED grammar + ADR-009 egress conformance & SPARK anti-theatre gate
+name: Rust & Cross-Language CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  rust-host:
+    name: Rust host (check + clippy + test + Windows target)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # stable
+        with:
+          toolchain: stable
+          components: clippy
+          targets: x86_64-pc-windows-gnu
+
+      - name: Cache Cargo build
+        uses: swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: host-rust
+
+      - name: Cargo check (portable)
+        working-directory: host-rust
+        run: cargo check --locked --all-targets
+
+      - name: Cargo clippy (-D warnings)
+        working-directory: host-rust
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      - name: Cargo test (unit + exhaustive 27-state truth table)
+        working-directory: host-rust
+        run: cargo test --locked --all-targets
+
+      - name: Cargo check + clippy on x86_64-pc-windows-gnu (live collectors)
+        working-directory: host-rust
+        run: |
+          cargo check --locked --all-targets --target x86_64-pc-windows-gnu
+          cargo clippy --locked --all-targets --target x86_64-pc-windows-gnu -- -D warnings
+
+  verified-seam:
+    name: SPARK kernel + Zig FFI + C-ABI differential test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install GNAT / GPRbuild
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends gnat gprbuild
+
+      - name: Install Zig 0.15.2
+        uses: goto-bus-stop/setup-zig@abea47f85e598557f500fa1fd2ab7464fcb39406 # v2.2.1
+        with:
+          version: 0.15.2
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # stable
+        with:
+          toolchain: stable
+
+      - name: Build SPARK/Ada classifier static library
+        working-directory: core-spark
+        run: gprbuild -P sentinel_core.gpr -p
+
+      - name: Build and unit-test Zig FFI seam
+        working-directory: ffi-zig
+        run: |
+          zig build
+          zig build test
+
+      - name: Differential test (Rust mirror vs linked SPARK kernel over C ABI)
+        working-directory: host-rust
+        run: |
+          ADALIB_DIR="$(dirname "$(gcc -print-file-name=adalib/libgnat.a)")"
+          echo "Using GNAT_ADALIB=$ADALIB_DIR"
+          GNAT_ADALIB="$ADALIB_DIR" cargo test --locked --features verified-core
+
+  idris2-abi:
+    name: Idris2 ABI totality & round-trip proofs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    container:
+      image: ghcr.io/stefan-hoeck/idris2-pack@sha256:f0758996a931fb35d9ecb1de273c4d59dabe2a09b433afc7e357f65a08b7e1ff
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check Idris2 ABI proofs
+        working-directory: abi-idris2
+        run: idris2 --build sentinel-abi.ipkg
+
+  deed:
+    uses: metadatastician/standards/.github/workflows/deed-conformance.yml@d3e4b485a2af90c92a8e18af0888cd19cb132cd9
+    with:
+      require-files: true
+    permissions:
+      contents: read
+
+  spark-theatre:
+    uses: metadatastician/standards/.github/workflows/spark-theatre-gate.yml@d3e4b485a2af90c92a8e18af0888cd19cb132cd9
+    with:
+      enforce_zero_contract: true
+    permissions:
+      actions: read
+      contents: read

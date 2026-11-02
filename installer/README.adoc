@@ -58,8 +58,14 @@ lsa-sentinel.exe --json          # stable machine line
 
 === ⚠️ Status note
 
-The classifier is formally verified, but the live *collectors have not
-yet been validated on a real machine*, and the *0patch patch-status
-collector is a placeholder* pending confirmation of the real local query
-(it fails safe to INDETERMINATE). See `+AFFIRMATION.adoc+`. Treat early
-output as advisory until the collectors are field-confirmed.
+The classifier core (`+core-spark/+`, `+abi-idris2/+`, `+ffi-zig/+`,
+`+host-rust/+`) is formally verified and unit-tested, and the live
+`+reg.exe+` (`+RunAsPPL+`) and UTF-16LE `+0patch.log+` formats were
+confirmed on a real Windows host (`+2026-07-02+` — see
+link:../docs/FIELD-VALIDATION.adoc[`+docs/FIELD-VALIDATION.adoc+`]).
+When LSA Protection blocks `+0patchLoader+` and no prior `+lsass.exe+`
+application line appears in `+0patch.log+`, the collector fails safe to
+`+INDETERMINATE+` (Warning `1002`, exit `1`) rather than a false
+`+MOOT+` all-clear. A live `+BLOCKED-INERT+` trigger against an active
+lsass-targeted micropatch has not yet been demonstrated end to end; see
+link:../AFFIRMATION.adoc[`+AFFIRMATION.adoc+`].
