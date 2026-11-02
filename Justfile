@@ -3,8 +3,8 @@
 #
 # Languages: SPARK/Ada (verified kernel), Rust (host), Idris2 (ABI proofs),
 # Zig (C-ABI seam + independent reference). `just all` runs the full gate.
-
-adalib := env_var_or_default("GNAT_ADALIB", "/usr/lib/gcc/x86_64-linux-gnu/13/adalib")
+# `host-rust/build.rs` auto-discovers GNAT's `adalib` via `gnatls -v` unless
+# `GNAT_ADALIB` is explicitly set in the environment.
 
 # List recipes.
 default:
@@ -40,15 +40,18 @@ test-zig:
 
 # Build the host (default = in-tree Rust reference classifier, no native deps).
 build-rust:
-    cd host-rust && cargo build
+    cd host-rust && cargo build --locked
 
 # Run the host test suite (portable; no native toolchain required).
 test-rust:
-    cd host-rust && cargo test
+    cd host-rust && cargo test --locked
 
 # Differential test: Rust mirror vs the SPARK-proved object code over the ABI.
 test-verified: build-core
-    cd host-rust && GNAT_ADALIB={{adalib}} cargo test --features verified-core
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ADALIB_DIR="${GNAT_ADALIB:-$(gnatls -v 2>/dev/null | awk '/\/adalib\/?$/ { gsub(/^[[:space:]]+|\/$/, ""); print; exit }')}"
+    cd host-rust && LD_LIBRARY_PATH="${ADALIB_DIR:+${ADALIB_DIR}:}${LD_LIBRARY_PATH:-}" cargo test --locked --features verified-core
 
 # Microbenchmark the classifier.
 bench:
@@ -74,7 +77,7 @@ dist-windows:
       echo "    cd host-rust && cargo build --release"
       exit 1
     fi
-    cd host-rust && cargo build --release
+    cd host-rust && cargo build --locked --release
 
 # Tag and push a release (CI builds + publishes the Windows artifact).
 # Lowercase parameter name avoids matching `\{\{[A-Z_]+\}\}` placeholder scans.

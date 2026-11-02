@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
-# ECOSYSTEM.a2ml — Ecosystem position
+# ECOSYSTEM.a2ml — Ecosystem position (co-retained alongside
+# 0patch-lsa-sentinel_chora.deed per D313 / standards#1362)
 #
 [metadata]
 project = "0patch-lsa-sentinel"
@@ -9,21 +10,22 @@ ecosystem = "hyperpolymath"
 
 [position]
 type = "security-tool"
-purpose = "A public alert + design and multi-language reference for containing the 0patch <-> Windows LSA Protection conflict, so silent lsass coverage loss becomes loud and contained instead of hidden."
+purpose = "A public alert + reverse-isolation container design and four-language verified watcher for containing the 0patch <-> Windows LSA Protection (RunAsPPL) conflict, so silent lsass.exe micropatch coverage loss becomes loud instead of hidden."
 # IS-NOT — anti-identity (each line is a real boundary, not a guess)
 what-this-is-not = [
   "a way to bypass Windows PPL / LSA Protection (it cannot, and must not, make an unsigned loader loadable)",
   "a 0patch or ACROS Security product, or affiliated with them",
-  "a finished, deployed agent — it is design-stage with a verified classifier core",
+  "a production-certified fleet agent — it is alpha-stage with a formally proved classifier core and partially field-validated Windows collectors",
   "related to the unrelated github.com/0patch namesake account",
 ]
 
 [pipeline]
 position = "standalone tool"
-notes = "SPARK kernel (verdict) -> C-ABI seam (Zig) -> Rust host + collectors; Idris2 proves the ABI contract. The host runs on Windows; the verdict logic is platform-independent and proved."
+notes = "SPARK kernel (verdict) -> C-ABI seam (Zig) -> Rust host + fail-closed collectors; Idris2 proves ABI round-trips and spec properties. Live collection runs on Windows; snapshot evaluation and proofs run cross-platform in CI."
 
 [related-projects]
 projects = [
-  { name = "0patch (ACROS Security)", relationship = "subject", notes = "The micropatching agent whose lsass coverage silently lapses under LSA Protection. Independent analysis; not affiliated." },
-  { name = "Windows LSA Protection (RunAsPPL)", relationship = "subject", notes = "The Microsoft control that blocks the unsigned 0patch loader from injecting into lsass.exe." },
+  { name = "0patch (ACROS Security)", relationship = "subject", notes = "The micropatching agent whose lsass.exe coverage silently lapses under LSA Protection. Independent analysis; not affiliated." },
+  { name = "Windows LSA Protection (RunAsPPL)", relationship = "subject", notes = "The Microsoft control that blocks unsigned/non-PPL modules such as 0patchLoaderX64.dll from injecting into lsass.exe." },
+  { name = "metadatastician/standards", relationship = "standard-source", notes = "Canonical governance, workflow, signing, RSR v2.0, and DEED ABNF specifications." },
 ]

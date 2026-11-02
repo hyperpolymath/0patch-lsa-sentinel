@@ -8,9 +8,21 @@ use std::hint::black_box;
 use std::time::Instant;
 
 fn all_signals() -> Vec<Signals> {
-    let prot = [LsaProtection::Unknown, LsaProtection::Off, LsaProtection::On];
-    let load = [LoaderPresence::Unknown, LoaderPresence::Blocked, LoaderPresence::Loaded];
-    let pat = [PatchStatus::Unknown, PatchStatus::Absent, PatchStatus::Present];
+    let prot = [
+        LsaProtection::Unknown,
+        LsaProtection::Off,
+        LsaProtection::On,
+    ];
+    let load = [
+        LoaderPresence::Unknown,
+        LoaderPresence::Blocked,
+        LoaderPresence::Loaded,
+    ];
+    let pat = [
+        PatchStatus::Unknown,
+        PatchStatus::Absent,
+        PatchStatus::Present,
+    ];
     let mut v = Vec::with_capacity(27);
     for &p in &prot {
         for &l in &load {
@@ -44,5 +56,7 @@ fn main() {
 
     let per = elapsed.as_nanos() as f64 / iters as f64;
     let mops = 1000.0 / per;
-    println!("classify: {iters} calls in {elapsed:?}  ->  {per:.2} ns/call  ({mops:.1} M calls/s)");
+    println!(
+        "classify: {iters} calls in {elapsed:?}  ->  {per:.2} ns/call  ({mops:.1} M calls/s)"
+    );
 }

@@ -1,50 +1,51 @@
 # SPDX-License-Identifier: MPL-2.0
 # Copyright (c) 2026 Jonathan D.A. Jewell (hyperpolymath) <j.d.a.jewell@open.ac.uk>
 #
-# STATE.a2ml — Project state checkpoint
+# STATE.a2ml — Project state checkpoint (co-retained alongside
+# 0patch-lsa-sentinel_chora.deed per D313 / standards#1362)
 #
 [metadata]
 project = "0patch-lsa-sentinel"
 version = "0.1.0"
-last-updated = "2026-07-02"
+last-updated = "2026-11-02"
 status = "active"  # active | paused | archived
 
 [project-context]
 name = "0patch-lsa-sentinel"
-purpose = "Detect silent 0patch lsass coverage loss under Windows LSA Protection. A public alert + design plus a SPARK-proved classifier cross-checked across Rust, Idris2, and Zig."
-completion-percentage = 40
+purpose = "Detect silent 0patch lsass.exe micropatch coverage loss under Windows LSA Protection (RunAsPPL). A public alert + reverse-isolation container design plus a SPARK-proved classifier cross-checked across Rust, Idris2, and Zig."
+completion-percentage = 75
 
 [position]
-phase = "design"           # design | implementation | testing | maintenance | archived
+phase = "testing"          # design | implementation | testing | maintenance | archived
 maturity = "alpha"         # experimental | alpha | beta | production | lts
 
 [route-to-mvp]
 milestones = [
-  { name = "Public alert + design (README.md, DESIGN.md)", completion = 100 },
-  { name = "SPARK classifier kernel proved pure + total (gnatprove)", completion = 100 },
-  { name = "Idris2 ABI conformance proofs (totality-checked)", completion = 100 },
-  { name = "Zig C-ABI seam + independent reference", completion = 100 },
-  { name = "Rust host + collectors (registry/eventlog/opatch/snapshot)", completion = 60 },
-  { name = "Windows collectors tested on a real host", completion = 0 },
-  { name = "0patch CLI collector confirmed against a shipped agent", completion = 0 },
-  { name = "End-to-end collect -> classify -> report run on Windows", completion = 0 },
-  { name = "Layer A policy (penned lsa-open machine-class)", completion = 0 },
-  { name = "Layer B sentinel (unsilenceable work-order routing)", completion = 0 },
+  { name = "Public alert + design (README.adoc, DESIGN.adoc)", completion = 100 },
+  { name = "SPARK classifier kernel proved pure + total (gnatprove in CI + local)", completion = 100 },
+  { name = "Idris2 ABI conformance proofs (totality-checked in CI)", completion = 100 },
+  { name = "Zig 0.15 C-ABI seam + exhaustive 27-state reference tests", completion = 100 },
+  { name = "Rust host + fail-closed collectors (registry/eventlog/opatch/snapshot)", completion = 100 },
+  { name = "Windows collectors partially field-validated (reg.exe + UTF-16LE 0patch.log)", completion = 70 },
+  { name = "Layer B sentinel PowerShell scheduled-task installer (implemented, pending live run)", completion = 70 },
+  { name = "Unblocked on-disk 0patch catalog source independent of right-censored 0patch.log", completion = 0 },
+  { name = "End-to-end collect -> classify -> Application Event Log run on Windows + live Present trigger", completion = 0 },
+  { name = "Layer A fleet policy automation (penned lsa-open machine-class)", completion = 0 },
 ]
 
 [blockers-and-issues]
-notes = "No live Windows test host yet; the 0patch CLI/agent surface used by the opatch collector is speculative and unconfirmed."
+notes = "0patch.log only records applied patches and is right-censored when RunAsPPL=On blocks 0patchLoader (handled fail-closed as Unknown -> INDETERMINATE); a direct local patch-catalog source and live Present -> BLOCKED-INERT trigger remain to be field-confirmed on Windows."
 
 [critical-next-actions]
 actions = [
-  "Validate the Windows collectors against a real RunAsPPL host with a 0patch agent installed",
-  "Confirm or correct the 0patch CLI collector against a shipped 0patch version",
-  "Demonstrate the end-to-end collect -> classify -> report path on Windows",
+  "Exercise Install-LsaSentinel.ps1 end-to-end on an elevated Windows host and confirm Event IDs 1000/1001/1002 in Event Viewer",
+  "Identify and field-validate an unblocked local 0patch patch-catalog source to detect pending lsass.exe patches even when 0patch.log has no prior lsass.exe line",
+  "Capture a live Present -> BLOCKED-INERT trigger and a live CodeIntegrity 3033/3063 loader-block match on Windows",
 ]
 
 [maintenance-status]
-last-run-utc = "never"
-last-result = "unknown"  # unknown | pass | warn | fail
+last-run-utc = "2026-11-02T16:00:00Z"
+last-result = "pass"  # unknown | pass | warn | fail
 open-warnings = 0
 open-failures = 0
 

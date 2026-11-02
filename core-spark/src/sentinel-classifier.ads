@@ -7,7 +7,7 @@
 --  This is the one piece that must never be wrong, so it is pure, total,
 --  and proved with SPARK (see `just prove`).
 --
---  The tri-state semantics mirror DESIGN.md §3:
+--  The tri-state semantics mirror DESIGN.adoc §3:
 --    Open_Covered  : LSA Protection off AND loader in lsass, patches present
 --                    -> lsass patches live (cred-dump protection forfeited)
 --    Blocked_Inert : patches present AND (LSA on OR loader blocked)

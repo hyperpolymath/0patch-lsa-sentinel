@@ -6,7 +6,7 @@
 #
 [metadata]
 version = "0.1.0"
-last-updated = "2026-07-02"
+last-updated = "2026-11-02"
 
 [hypatia-config]
 scan-enabled = true

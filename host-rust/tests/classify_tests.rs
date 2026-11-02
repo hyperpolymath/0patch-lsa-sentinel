@@ -9,12 +9,21 @@
 use lsa_sentinel::classify::classify;
 use lsa_sentinel::model::{LoaderPresence, LsaProtection, PatchStatus, Signals, Verdict};
 
-const PROT: [LsaProtection; 3] =
-    [LsaProtection::Unknown, LsaProtection::Off, LsaProtection::On];
-const LOAD: [LoaderPresence; 3] =
-    [LoaderPresence::Unknown, LoaderPresence::Blocked, LoaderPresence::Loaded];
-const PAT: [PatchStatus; 3] =
-    [PatchStatus::Unknown, PatchStatus::Absent, PatchStatus::Present];
+const PROT: [LsaProtection; 3] = [
+    LsaProtection::Unknown,
+    LsaProtection::Off,
+    LsaProtection::On,
+];
+const LOAD: [LoaderPresence; 3] = [
+    LoaderPresence::Unknown,
+    LoaderPresence::Blocked,
+    LoaderPresence::Loaded,
+];
+const PAT: [PatchStatus; 3] = [
+    PatchStatus::Unknown,
+    PatchStatus::Absent,
+    PatchStatus::Present,
+];
 
 fn all_signals() -> impl Iterator<Item = Signals> {
     PROT.iter().flat_map(|&p| {
@@ -68,7 +77,11 @@ fn blocked_inert_only_when_real_silent_failure() {
 /// The headline operational case: LSA on + lsass patch outstanding = alarm.
 #[test]
 fn the_dangerous_case_is_flagged() {
-    let s = Signals::new(LsaProtection::On, LoaderPresence::Blocked, PatchStatus::Present);
+    let s = Signals::new(
+        LsaProtection::On,
+        LoaderPresence::Blocked,
+        PatchStatus::Present,
+    );
     assert_eq!(classify(s), Verdict::BlockedInert);
     assert_eq!(classify(s).exit_code(), 2);
 }
@@ -76,7 +89,11 @@ fn the_dangerous_case_is_flagged() {
 /// Fail-safe: all-unknown must never read as covered or moot.
 #[test]
 fn all_unknown_is_indeterminate() {
-    let s = Signals::new(LsaProtection::Unknown, LoaderPresence::Unknown, PatchStatus::Unknown);
+    let s = Signals::new(
+        LsaProtection::Unknown,
+        LoaderPresence::Unknown,
+        PatchStatus::Unknown,
+    );
     assert_eq!(classify(s), Verdict::Indeterminate);
 }
 
@@ -144,6 +161,33 @@ fn protected_or_blocked_host_never_silently_clears_from_opatch_log() {
                 "exit code 0 on blocked/unknown host ({protection:?}, block={recent_block})"
             );
         }
+    }
+}
+
+/// CLI smoke check: `--help` and `--version` exit 0 with descriptive output.
+#[test]
+fn cli_help_and_version_succeed() {
+    let exe = env!("CARGO_BIN_EXE_lsa-sentinel");
+    for flag in ["--help", "-h"] {
+        let out = std::process::Command::new(exe)
+            .arg(flag)
+            .output()
+            .expect("spawn lsa-sentinel");
+        assert!(out.status.success(), "{flag} exited {:?}", out.status);
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(stdout.contains("USAGE:"), "missing USAGE in {stdout:?}");
+    }
+    for flag in ["--version", "-V"] {
+        let out = std::process::Command::new(exe)
+            .arg(flag)
+            .output()
+            .expect("spawn lsa-sentinel");
+        assert!(out.status.success(), "{flag} exited {:?}", out.status);
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(
+            stdout.starts_with("lsa-sentinel "),
+            "unexpected version output {stdout:?}"
+        );
     }
 }
 

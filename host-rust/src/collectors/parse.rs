@@ -169,7 +169,10 @@ mod tests {
 
     #[test]
     fn runas_ppl_garbage_is_unknown() {
-        assert_eq!(parse_runas_ppl("totally unrelated output"), LsaProtection::Unknown);
+        assert_eq!(
+            parse_runas_ppl("totally unrelated output"),
+            LsaProtection::Unknown
+        );
     }
 
     #[test]

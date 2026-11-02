@@ -6,8 +6,8 @@
 # Read at session start by any AI agent.
 #
 [metadata]
-version = "1.0.0"
-last-updated = "2026-07-02"
+version = "1.1.0"
+last-updated = "2026-11-02"
 
 [methodology]
 default-mode = "hybrid"       # convergent | divergent | hybrid
@@ -34,18 +34,20 @@ rules = [
   "Never make an unsigned loader loadable into a protected process — the tool is observational, never a PPL/CI bypass.",
   "The classifier verdict stays in SPARK; the host must not re-derive 'covered' in unproved Rust.",
   "FFI stays a single isolated, documented, fail-safe wrapper.",
-  "Do not claim untested collectors are verified.",
+  "Never treat right-censored 0patch.log silence on a blocked/RunAsPPL host as PatchStatus::Absent — fail closed to Unknown (INDETERMINATE).",
+  "Do not claim unvalidated Windows paths or end-to-end scheduled-task execution are verified until demonstrated live.",
 ]
 language-invariant = "ada-spark"   # the verdict kernel is SPARK; do not reimplement it in another language
 
 [methodology.known-constraints]
 constraints = [
-  "No live Windows test host yet — the end-to-end path has never run on RunAsPPL.",
-  "The 0patch CLI/agent surface used by host-rust/src/collectors/opatch.rs is speculative and unconfirmed.",
+  "Partial Windows field validation (2026-07-02): reg.exe RunAsPPL output and UTF-16LE C:\\ProgramData\\0patch\\Logs\\0patch.log format are confirmed, and speculative CLI probing was removed.",
+  "0patch.log is right-censored when RunAsPPL=On blocks 0patchLoader; until an unblocked on-disk patch catalog source is field-confirmed, blocked hosts without a prior lsass.exe log entry report Unknown -> INDETERMINATE (exit 1).",
+  "A live Present -> BLOCKED-INERT trigger, positive CodeIntegrity 3033/3063 match, and end-to-end Install-LsaSentinel.ps1 scheduled-task execution have not yet been observed live.",
 ]
 
 [methodology.state-validation]
 reject-if-contains = ["{{PLACEHOLDER}}", "rsr-template-repo"]
 reject-if-project-name-mismatch = true
 staleness-threshold-days = 90
-fallback-files = ["README.md", "DESIGN.md", ".machine_readable/descriptiles/STATE.a2ml"]
+fallback-files = ["0patch-lsa-sentinel_chora.deed", "README.adoc", "DESIGN.adoc", ".machine_readable/descriptiles/STATE.a2ml"]

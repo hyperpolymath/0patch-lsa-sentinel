@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // Copyright (c) Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 = Audit Gate
-Codex
-v1.1, 2026-07-02
+Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
+v1.2, 2026-11-02
 :toc:
 :toclevels: 2
 :sectnums:
@@ -12,8 +12,9 @@ v1.1, 2026-07-02
 This root document exists so humans and bots can see the hard audit posture
 without having to discover the standards repository first.
 
-Canonical source documents live in the `standards` repository. This file is a
-repo-local audit gate summary for this repository and automated agents.
+Canonical source documents live in the `metadatastician/standards` repository.
+This file is a repo-local audit gate summary for this repository and automated
+agents.
 
 == Hard Rules
 
@@ -33,24 +34,38 @@ repo-local audit gate summary for this repository and automated agents.
 
 == Repository-Specific Audit Notes
 
-* The SPARK classifier kernel (`core-spark/`) is proved pure and total by
-  `gnatprove`; the Idris2 ABI (`abi-idris2/`) and Zig FFI (`ffi-zig/`)
-  cross-check the same contract. These are the verified parts.
-* The Windows collectors (registry / event-log / 0patch / snapshot) in
-  `host-rust/src/collectors/` have **not** been exercised on a real Windows
-  host. The 0patch CLI collector is speculative. See
+* *Proved & CI-verified core:* The SPARK classifier kernel (`core-spark/`) is
+  proved pure, total, and postcondition-conforming by `gnatprove` (`--level=2
+  --report=all`), the Idris2 ABI (`abi-idris2/`) totality-checks discriminant
+  round-trips and spec properties, the Zig FFI seam (`ffi-zig/`) runs
+  exhaustive 27-state property tests, and the Rust host (`host-rust/`) runs
+  exhaustive 27-state differential tests over the C ABI against
+  `libsentinel_core.a` in CI (`.github/workflows/rust-ci.yml`).
+* *Partially field-validated Windows collectors (`2026-07-02`):* Live `reg.exe`
+  `RunAsPPL` output and the UTF-16LE `C:\ProgramData\0patch\Logs\0patch.log`
+  format were validated on a real Windows host (`RunAsPPL=0x1`) with a licensed
+  0patch agent installed; the speculative `0patchConsole.exe list-patches` CLI
+  was removed (see link:docs/FIELD-VALIDATION.adoc[docs/FIELD-VALIDATION.adoc]).
+* *Fail-closed right-censorship invariant:* Because `0patch.log` only records
+  applied patches, `parse_opatch_log` returns `Unknown` (`INDETERMINATE`, exit
+  `1`) whenever `loader != Loaded` and no `lsass.exe` application line is
+  present, preventing a false `MOOT` (exit `0`) on protected hosts.
+* *Still unverified live:* A live `Present` (`BLOCKED-INERT`, exit `2`) trigger
+  on Windows, a positive CodeIntegrity `3033`/`3063` loader-block match, an
+  unblocked local 0patch catalog source independent of `0patch.log`, and an
+  end-to-end `installer/Install-LsaSentinel.ps1` scheduled-task run. See
   link:AFFIRMATION.adoc[AFFIRMATION.adoc] for the dated honesty snapshot and
   `audits/audit-residuals.adoc` for accepted structural residuals.
 
 == Canonical Standards
 
-Read these as the authoritative source:
+Read these in `metadatastician/standards` as the authoritative source:
 
-* `standards/component-readiness-grades/COMPONENT-READINESS-GRADES.md`
-* `standards/release-pre-flight/V1-GATE.adoc`
-* `standards/publication-pre-flight/PREFLIGHT.adoc`
-* `standards/publication-pre-flight/ESTATE-AUDIT-BASELINE-2026-03-30.adoc`
-* `standards/session-management-standards/README.adoc`
+* `component-readiness-grades/COMPONENT-READINESS-GRADES.adoc`
+* `3-practice/release-pre-flight/V1-GATE.adoc`
+* `3-practice/publication-pre-flight/PREFLIGHT.adoc`
+* `3-practice/PROOF-POLICY.adoc`
+* `3-practice/session-management-standards/`
 
 == Bot Requirement
 

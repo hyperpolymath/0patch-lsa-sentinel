@@ -105,7 +105,12 @@ pub struct Signals {
 }
 
 impl Signals {
+    /// Construct a [`Signals`] triple from its three observed components.
     pub fn new(protection: LsaProtection, loader: LoaderPresence, patches: PatchStatus) -> Self {
-        Signals { protection, loader, patches }
+        Signals {
+            protection,
+            loader,
+            patches,
+        }
     }
 }

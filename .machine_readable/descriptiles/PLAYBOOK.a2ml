@@ -6,34 +6,34 @@
 #
 [metadata]
 version = "0.1.0"
-last-updated = "2026-07-02"
+last-updated = "2026-11-02"
 
 [build]
-full-gate = "just all"            # build-core, prove, abi-check, ffi, rust host
-spark-build = "just build-core"   # gprbuild -P sentinel_core.gpr
+full-gate = "just all"            # prove, abi-check, build-zig, test-zig, test-verified, bench
+spark-build = "just build-core"   # gprbuild -P sentinel_core.gpr -p
 spark-prove = "just prove"        # gnatprove -P sentinel_core.gpr --level=2 --report=all
 abi-check = "just abi-check"      # idris2 --build sentinel-abi.ipkg
 
 [verify]
 # 1. just prove        — discharge the SPARK classifier postcondition + termination
 # 2. just abi-check    — type/totality-check the Idris2 ABI proofs
-# 3. cargo test        — Rust host unit + integration tests
-# 4. zig build test    — Zig FFI seam tests
+# 3. just test-zig     — Zig 0.15 FFI seam + exhaustive 27-state tests
+# 4. just test-verified — Rust host + C-ABI differential test against libsentinel_core.a
 
 [incident-response]
-# 1. Check .machine_readable/descriptiles/STATE.a2ml for current status
-# 2. If a "covered" verdict is suspected false: re-run the classifier proof and
-#    inspect host-rust/src/ffi.rs fail-safe decode (out-of-range -> Indeterminate)
+# 1. Check 0patch-lsa-sentinel_chora.deed and .machine_readable/descriptiles/STATE.a2ml
+# 2. If a "covered" or "moot" verdict is suspected false: re-run `just all`, verify
+#    host-rust/src/ffi.rs fail-safe decode (out-of-range -> Indeterminate), and
+#    verify parse_opatch_log right-censorship guard (loader != Loaded -> Unknown)
 # 3. Review recent commits and CI results
 
 [release-process]
-# 1. Update version in STATE.a2ml, META.a2ml, CHANGELOG.md
-# 2. Run the full gate `just all` and confirm all proofs discharge
-# 3. Re-anchor AFFIRMATION.adoc honestly (collectors remain untested until a
-#    real Windows host run exists — do NOT claim otherwise)
-# 4. Tag and push a signed commit/tag
+# 1. Update version in 0patch-lsa-sentinel_chora.deed, STATE.a2ml, META.a2ml, CHANGELOG.adoc
+# 2. Run the full gate `just all` and confirm all SPARK/Idris2/Zig/Rust gates pass
+# 3. Re-anchor AFFIRMATION.adoc honestly (state strictly what was field-validated vs open)
+# 4. Tag and push a signed tag (`just release vX.Y.Z`)
 
 [honesty-gate]
-# A release must not claim the Windows collectors are verified, nor that the
-# 0patch CLI collector is confirmed, until an end-to-end run on a real
-# RunAsPPL host exists. See AFFIRMATION.adoc.
+# A release must not claim end-to-end Windows scheduled-task deployment, live
+# BLOCKED-INERT observation, or unblocked local catalog enumeration until those
+# paths have been demonstrated on a real RunAsPPL Windows host. See AFFIRMATION.adoc.

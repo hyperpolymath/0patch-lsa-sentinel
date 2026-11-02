@@ -26,7 +26,9 @@ impl Snapshot {
     /// keys/values degrade to `Unknown` at [`SignalSource::collect`] time).
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(text: impl Into<String>) -> Self {
-        Snapshot { text: text.into() }
+        Snapshot {
+            text: text.into(),
+        }
     }
 
     pub fn from_path(path: &str) -> Result<Self, String> {
@@ -74,6 +76,10 @@ impl SignalSource for Snapshot {
             Some("absent") => PatchStatus::Absent,
             _ => PatchStatus::Unknown,
         };
-        Ok(Signals { protection, loader, patches })
+        Ok(Signals {
+            protection,
+            loader,
+            patches,
+        })
     }
 }

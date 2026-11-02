@@ -10,6 +10,15 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
 
 ==== Fixed
 
+* *Audit receipts, contractiles, CLI flags, and live CI proof discharge*:
+  wired checksum-verified `+gnatprove 15.1.0+` (`+--level=2 --report=all+`),
+  `+cargo fmt --all -- --check+`, and `+Mustfile.a2ml+`/`+Dustfile.a2ml+`
+  contractile verification directly into `+rust-ci.yml+`; added `+--help+` /
+  `+-h+` and `+--version+` / `+-V+` support to `+lsa-sentinel+`; aligned
+  `+Justfile+` `+test-verified+` with `+gnatls -v+` runtime discovery; synced
+  co-retained `+.machine_readable/+` `.a2ml` files with
+  `+0patch-lsa-sentinel_chora.deed+`; and re-anchored `+AUDIT.adoc+` and
+  `+AFFIRMATION.adoc+`.
 * *Collector right-censorship safety defect (`+host-rust/+`)*: conditioned
   `+parse_opatch_log+` and `+opatch::lsass_patch_status+` on
   `+LoaderPresence+` so hosts with LSA Protection (`+RunAsPPL=On+`) or an

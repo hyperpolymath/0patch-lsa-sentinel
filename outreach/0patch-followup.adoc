@@ -42,9 +42,11 @@ surface the reduced coverage in the console/reporting?
 . Is there any supported configuration that keeps BOTH LSA Protection
 and full 0patch lsass coverage, or is the standing recommendation
 explicitly "`pick one`"?
-. How can a customer enumerate, from the console, exactly which patches
-are currently inert on a given machine because of this block? (I’d use
-this to replace a placeholder in my detector with the real local query.)
+. How can a customer enumerate, from the console or on-disk catalog,
+exactly which patches are currently inert on a given machine because of
+this block? (I’d use this to complement `+0patch.log+` — which is
+right-censored whenever `+RunAsPPL+` blocks the loader — with a direct
+local catalog query.)
 
 Thank you — happy to share agent version, OS build, and CodeIntegrity
 event logs.
