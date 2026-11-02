@@ -52,7 +52,7 @@ impl Verdict {
     /// Process exit code: non-zero for the state operators must act on.
     pub fn exit_code(self) -> i32 {
         match self {
-            Verdict::BlockedInert => 2, // the alarm state
+            Verdict::BlockedInert => 2,  // the alarm state
             Verdict::Indeterminate => 1, // needs investigation
             Verdict::OpenCovered | Verdict::Moot => 0,
         }
