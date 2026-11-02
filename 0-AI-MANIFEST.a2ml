@@ -5,7 +5,7 @@
 #
 [metadata]
 version = "0.1.0"
-last-updated = "2026-07-02"
+last-updated = "2026-11-02"
 
 [project]
 name = "0patch-lsa-sentinel"

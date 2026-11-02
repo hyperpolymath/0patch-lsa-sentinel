@@ -52,12 +52,13 @@ impl Verdict {
     /// Process exit code: non-zero for the state operators must act on.
     pub fn exit_code(self) -> i32 {
         match self {
-            Verdict::BlockedInert => 2, // the alarm state
+            Verdict::BlockedInert => 2,  // the alarm state
             Verdict::Indeterminate => 1, // needs investigation
             Verdict::OpenCovered | Verdict::Moot => 0,
         }
     }
 
+    /// Status glyph used in human-facing output.
     pub fn glyph(self) -> &'static str {
         match self {
             Verdict::OpenCovered => "🟢",
@@ -67,6 +68,7 @@ impl Verdict {
         }
     }
 
+    /// Stable uppercase verdict identifier used in logs and machine output.
     pub fn tag(self) -> &'static str {
         match self {
             Verdict::OpenCovered => "OPEN-COVERED",
@@ -78,6 +80,7 @@ impl Verdict {
 }
 
 impl From<Verdict> for i32 {
+    /// Convert a [`Verdict`] into its canonical C-ABI integer discriminant.
     fn from(v: Verdict) -> i32 {
         v as i32
     }
@@ -85,6 +88,8 @@ impl From<Verdict> for i32 {
 
 impl TryFrom<i32> for Verdict {
     type Error = i32;
+
+    /// Decode a canonical C-ABI integer discriminant into a [`Verdict`].
     fn try_from(x: i32) -> Result<Verdict, i32> {
         match x {
             0 => Ok(Verdict::Indeterminate),
@@ -105,7 +110,12 @@ pub struct Signals {
 }
 
 impl Signals {
+    /// Construct a [`Signals`] triple from its three observed components.
     pub fn new(protection: LsaProtection, loader: LoaderPresence, patches: PatchStatus) -> Self {
-        Signals { protection, loader, patches }
+        Signals {
+            protection,
+            loader,
+            patches,
+        }
     }
 }

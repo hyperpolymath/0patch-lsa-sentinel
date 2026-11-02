@@ -65,14 +65,15 @@ link:./outreach/STATUS.adoc[`+outreach/STATUS.adoc+`].
 
 === Status & verification honesty
 
-* *Proven / tested:* In CI (`+.github/workflows/rust-ci.yml+`), the Rust
-host crate (`+check+`, `+clippy -D warnings+`, unit + 27-state tests,
-and `+x86_64-pc-windows-gnu+` live-collector check/clippy) is
-differentially tested over the C ABI against the linked SPARK static
-library (`+libsentinel_core.a+`), alongside Zig 0.15 FFI unit tests,
-Idris2 totality and round-trip proofs, DEED + ADR-009 egress validation,
-and SPARK anti-theatre source checks. Full `+gnatprove+` proof discharge
-runs locally via `+just prove+` / `+just all+` (recorded in
+* *Proven / tested:* In CI (`+.github/workflows/rust-ci.yml+`), the
+SPARK classifier kernel is formally proved by `+gnatprove+`
+(`+--level=2 --report=all+`) and compiled into `+libsentinel_core.a+`,
+the Rust host crate (`+fmt+`, `+check+`, `+clippy -D warnings+`, unit +
+27-state + CLI tests, and `+x86_64-pc-windows-gnu+` live-collector
+check/clippy) is differentially tested over the C ABI against the linked
+SPARK static library, Zig 0.15 FFI unit tests and Idris2 totality /
+round-trip proofs execute cleanly, and DEED + ADR-009 egress +
+Contractiles + SPARK anti-theatre checks are enforced (recorded in
 link:./AFFIRMATION.adoc[`+AFFIRMATION.adoc+`]).
 * *Partially field-validated (`+2026-07-02+`):* Live `+reg.exe+`
 `+RunAsPPL+` parsing, `+0patch\Agent+` paths, and the UTF-16LE

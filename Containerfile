@@ -2,14 +2,12 @@
 #
 # Containerfile — 0patch-lsa-sentinel
 #
-# Nix retirement note: Guix became the estate-primary packaging path on
-# 2026-06-01; flake.nix is kept (it predates that ruling and Guix
-# packaging is not yet wired up here) but no longer satisfies the
-# governance container gate on its own — a sealed, buildable
-# Containerfile is the accepted escape hatch. This file is a real,
-# non-stub build: every dependency install below is an active RUN
-# step, and the binary produced here is the actual `lsa-sentinel`
-# crate (host-rust/), the default in-tree Rust reference classifier.
+# Packaging note: Guix became the estate-primary packaging path on
+# 2026-06-01 (legacy `flake.nix` was retired); until a Guix manifest
+# is wired up, a sealed, buildable Containerfile is the canonical
+# container artifact. This file is a real, non-stub build: every
+# dependency install below is an active RUN step, and the binary
+# produced here is the actual `lsa-sentinel` crate (host-rust/).
 #
 # Repo shape note: this is a multi-language repo (Rust + SPARK/Ada +
 # Idris2 + Zig), but only ONE of those is actually buildable in a

@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: MPL-2.0
 # Cross-language verification gate for 0patch-lsa-sentinel:
-#   1. Rust host crate (check, clippy -D warnings, unit + truth-table tests)
+#   1. Rust host crate (rustfmt, check, clippy -D warnings, unit + truth-table tests)
 #   2. Windows cross-target check (typechecks #[cfg(windows)] live collectors)
-#   3. SPARK/Ada kernel build + Zig C-ABI FFI build/tests + C-ABI differential test
+#   3. SPARK/Ada gnatprove formal proof + static library + Zig C-ABI FFI + C-ABI differential test
 #   4. Idris2 ABI conformance & totality proofs
-#   5. DEED grammar + ADR-009 egress conformance & SPARK anti-theatre gate
+#   5. DEED grammar + ADR-009 egress conformance, Contractiles, & SPARK anti-theatre gate
 name: Rust & Cross-Language CI
 
 on:
@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   rust-host:
-    name: Rust host (check + clippy + test + Windows target)
+    name: Rust host (fmt + check + clippy + test + Windows target)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -36,7 +36,7 @@ jobs:
       - name: Configure stable Rust toolchain & Windows target
         run: |
           set -euo pipefail
-          rustup toolchain install stable --profile minimal --component clippy
+          rustup toolchain install stable --profile minimal --component clippy,rustfmt
           rustup default stable
           rustup target add x86_64-pc-windows-gnu
 
@@ -50,9 +50,20 @@ jobs:
             host-rust/target/
           key: cargo-${{ runner.os }}-${{ hashFiles('host-rust/Cargo.lock') }}
 
+      - name: Cargo fmt (--check)
+        working-directory: host-rust
+        run: |
+          set -o pipefail
+          if ! cargo fmt --all -- --check 2>&1 | tee /tmp/cargo.log; then
+            msg="$(awk 'NF { printf "%s | ", $0 }' /tmp/cargo.log | cut -c1-3500)"
+            echo "::error::${msg}"
+            exit 1
+          fi
+
       - name: Cargo check (portable)
         working-directory: host-rust
         run: |
+          set -o pipefail
           if ! cargo check --locked --all-targets 2>&1 | tee /tmp/cargo.log; then
             grep -E '^error|warning:|note:' /tmp/cargo.log | head -n 10 | while IFS= read -r l; do echo "::error::$l"; done
             exit 101
@@ -61,14 +72,16 @@ jobs:
       - name: Cargo clippy (-D warnings)
         working-directory: host-rust
         run: |
+          set -o pipefail
           if ! cargo clippy --locked --all-targets -- -D warnings 2>&1 | tee /tmp/cargo.log; then
             grep -E '^error|warning:|help:' /tmp/cargo.log | head -n 12 | while IFS= read -r l; do echo "::error::$l"; done
             exit 101
           fi
 
-      - name: Cargo test (unit + exhaustive 27-state truth table)
+      - name: Cargo test (unit + exhaustive 27-state truth table + CLI)
         working-directory: host-rust
         run: |
+          set -o pipefail
           if ! cargo test --locked --all-targets 2>&1 | tee /tmp/cargo.log; then
             grep -E 'FAILED|panicked|^error' /tmp/cargo.log | head -n 12 | while IFS= read -r l; do echo "::error::$l"; done
             exit 101
@@ -77,15 +90,16 @@ jobs:
       - name: Cargo check + clippy on x86_64-pc-windows-gnu (live collectors)
         working-directory: host-rust
         run: |
+          set -o pipefail
           if ! { cargo check --locked --lib --bins --tests --target x86_64-pc-windows-gnu && cargo clippy --locked --lib --bins --tests --target x86_64-pc-windows-gnu -- -D warnings; } 2>&1 | tee /tmp/cargo.log; then
             grep -E '^error|warning:|help:' /tmp/cargo.log | head -n 12 | while IFS= read -r l; do echo "::error::$l"; done
             exit 101
           fi
 
   verified-seam:
-    name: SPARK kernel + Zig FFI + C-ABI differential test
+    name: SPARK gnatprove + Zig FFI + C-ABI differential test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
@@ -98,6 +112,43 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends gnat gprbuild
+
+      - name: Cache GNATprove 15.1.0
+        id: cache-gnatprove
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/gnatprove-15.1.0-1
+          key: gnatprove-x86_64-linux-15.1.0-1-aad9a73f
+
+      - name: Install GNATprove 15.1.0 (checksum-verified from Alire GNAT-FSF-builds)
+        run: |
+          set -euo pipefail
+          DEST="$HOME/.cache/gnatprove-15.1.0-1"
+          if [ ! -x "$DEST/bin/gnatprove" ]; then
+            rm -rf "$DEST"
+            mkdir -p "$DEST"
+            curl --proto '=https' --proto-redir '=https' --tlsv1.2 --fail --silent --show-error --location \
+              https://github.com/alire-project/GNAT-FSF-builds/releases/download/gnatprove-15.1.0-1/gnatprove-x86_64-linux-15.1.0-1.tar.gz \
+              --output "$RUNNER_TEMP/gnatprove.tar.gz"
+            echo "aad9a73f600d3008f33141a6cd4c5314d4c210e8928edc172c23c76104ddf7b2  $RUNNER_TEMP/gnatprove.tar.gz" | sha256sum --check --strict
+            tar -xzf "$RUNNER_TEMP/gnatprove.tar.gz" --strip-components=1 -C "$DEST"
+            rm -f "$RUNNER_TEMP/gnatprove.tar.gz"
+          fi
+          echo "$DEST/bin" >> "$GITHUB_PATH"
+
+      - name: Prove SPARK/Ada classifier postcondition & totality (gnatprove)
+        working-directory: core-spark
+        run: |
+          set -euo pipefail
+          gnatprove --version
+          if ! gnatprove -P sentinel_core.gpr --level=2 --report=all 2>&1 | tee /tmp/gnatprove.log; then
+            tail -n 20 /tmp/gnatprove.log | while IFS= read -r l; do echo "::error::$l"; done
+            exit 1
+          fi
+          if grep -E ':[0-9]+:[0-9]+: (low|medium|high):' /tmp/gnatprove.log; then
+            echo "::error::Unproved SPARK verification condition(s) detected"
+            exit 1
+          fi
 
       - name: Install Zig 0.15.2 (checksum-verified from ziglang.org)
         run: |
@@ -113,7 +164,7 @@ jobs:
             --output "$RUNNER_TEMP/zig.tar.xz"
           echo "${ZIG_SHA}  $RUNNER_TEMP/zig.tar.xz" | sha256sum --check --strict
           mkdir -p "$RUNNER_TEMP/zig"
-          tar -xJf "$RUNNER_TEMP/zig.tar.xz" -C "$RUNNER_TEMP/zig" --strip-components=1
+          tar -xJf "$RUNNER_TEMP/zig.tar.xz" --strip-components=1 -C "$RUNNER_TEMP/zig"
           echo "$RUNNER_TEMP/zig" >> "$GITHUB_PATH"
 
       - name: Configure stable Rust toolchain
@@ -165,7 +216,7 @@ jobs:
         run: idris2 --build sentinel-abi.ipkg
 
   deed-and-spark-gates:
-    name: DEED conformance & SPARK anti-theatre gate
+    name: DEED conformance, Contractiles & SPARK anti-theatre gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -174,6 +225,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Checkout pinned DEED linter from metadatastician/standards
@@ -195,6 +247,53 @@ jobs:
           test -s "$RUNNER_TEMP/deeds"
           xargs node "$RUNNER_TEMP/deed-tools/deed_lint.js" < "$RUNNER_TEMP/deeds"
           xargs node "$RUNNER_TEMP/deed-tools/deed_lint.js" --egress < "$RUNNER_TEMP/deeds"
+
+      - name: Enforce Mustfile contractile invariants (including commit signature)
+        run: |
+          set -euo pipefail
+          GNUPGHOME="$(mktemp -d)"
+          export GNUPGHOME
+          chmod 700 "$GNUPGHOME"
+          curl --proto '=https' --tlsv1.2 -fsSL https://github.com/web-flow.gpg | gpg --batch --import
+          curl --proto '=https' --tlsv1.2 -fsSL https://github.com/hyperpolymath.gpg | gpg --batch --import || true
+          while IFS= read -r cmd; do
+            echo "[mustfile] $cmd"
+            bash -c "$cmd"
+          done < <(awk '/^- run:[[:space:]]*/ { sub(/^- run:[[:space:]]*/, ""); if ($0 ~ /^".*"$/) { sub(/^"/, ""); sub(/"$/, ""); } print }' .machine_readable/contractiles/Mustfile.a2ml)
+          rm -rf "$GNUPGHOME"
+
+      - name: Run Dustfile advisory hygiene checks (non-blocking)
+        run: |
+          set -uo pipefail
+          while IFS=$'\t' read -r name sev cmd; do
+            echo "[dustfile:${sev}] ${name}: ${cmd}"
+            if ! bash -c "$cmd"; then
+              if [ "$sev" = "info" ]; then
+                echo "::notice::Dustfile advisory (${name}) reported drift: ${cmd}"
+              else
+                echo "::warning::Dustfile advisory (${name}) reported drift: ${cmd}"
+              fi
+            fi
+          done < <(awk '
+            function flush() {
+              if (name != "" && cmd != "") print name "\t" sev "\t" cmd
+              name = ""; sev = "warning"; cmd = ""
+            }
+            /^###[[:space:]]+/ { flush(); name = $2; next }
+            /^- run:[[:space:]]*/ {
+              line = $0
+              sub(/^- run:[[:space:]]*/, "", line)
+              if (line ~ /^".*"$/) { sub(/^"/, "", line); sub(/"$/, "", line) }
+              cmd = line
+              next
+            }
+            /^- severity:[[:space:]]*/ {
+              sev = $0
+              sub(/^- severity:[[:space:]]*/, "", sev)
+              next
+            }
+            END { flush() }
+          ' .machine_readable/contractiles/Dustfile.a2ml)
 
       - name: Check SPARK units for hollow proof claims (standards#135)
         run: |

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC-BY-SA-4.0
 // SPDX-FileCopyrightText: 2026 Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
-= AFFIRMATION — 0patch-lsa-sentinel, as of 2026-07-02
+= AFFIRMATION — 0patch-lsa-sentinel, as of 2026-11-02
 :toc: macro
 :toclevels: 2
 
@@ -13,7 +13,8 @@ toc::[]
 A short, dated, signed snapshot of what Jonathan D.A. Jewell can honestly and
 verifiably claim about *0patch-lsa-sentinel* at one exact commit. Nothing here
 is marketing and nothing is a promise about the future — those live in
-`README.md` and `DESIGN.md`. This file is the receipt.
+link:README.adoc[`README.adoc`] and link:DESIGN.adoc[`DESIGN.adoc`]. This file
+is the receipt.
 
 It stays trustworthy through three moving parts:
 
@@ -32,7 +33,7 @@ correctness. Treat it as a falsifiable claim, not gospel.
 This document records the maintainer's *best belief* at the timestamp below. It
 is *not a guarantee of correctness.* The only guarantee is *no intentional
 overclaim*: where something is proven we say "proven"; where it is untested or
-speculative, we say so. You are invited to refute any claim here with a
+right-censored, we say so. You are invited to refute any claim here with a
 counter-example, a failing run, or a contradicting source.
 
 == What we affirm
@@ -41,63 +42,75 @@ counter-example, a failing run, or a contradicting source.
 |===
 | Claim | Status | Evidence (command / `file:line`)
 
-| The SPARK classifier (`Sentinel.Classifier.Classify`) is proved pure, total, and free of runtime errors
+| The SPARK classifier (`Sentinel.Classifier.Classify`) is proved pure, total, postcondition-conforming, and free of runtime errors
 | proven
-| `just prove` → `gnatprove -P sentinel_core.gpr --level=2 --report=all` discharges all VCs
+| `just prove` / `.github/workflows/rust-ci.yml` → `gnatprove -P sentinel_core.gpr --level=2 --report=all` discharges all VCs
 
-| The classifier verdict is cross-checked across four languages (SPARK kernel, Idris2 ABI, Rust host, Zig FFI seam) against one shared contract
+| The classifier verdict is cross-checked across four languages (SPARK kernel, Idris2 ABI, Rust host, Zig FFI seam) against one shared integer C-ABI contract
 | affirmed
-| `core-spark/`, `abi-idris2/src/Sentinel/ABI.idr`, `host-rust/src/classify.rs`, `ffi-zig/src/sentinel_ffi.zig`; `just all`
+| `core-spark/`, `abi-idris2/src/Sentinel/ABI.idr`, `host-rust/src/classify.rs`, `ffi-zig/src/sentinel_ffi.zig`; `just all` and `.github/workflows/rust-ci.yml`
 
-| The Idris2 ABI proofs type-check and totality-check
+| The Idris2 ABI proofs type-check and totality-check (`%default total`)
 | affirmed
-| `just abi-check` → `idris2 --build sentinel-abi.ipkg`
+| `just abi-check` / `.github/workflows/rust-ci.yml` → `idris2 --build sentinel-abi.ipkg`
 
 | The single Rust `unsafe` block (the FFI call) is isolated, documented, and fail-safe decoded (out-of-range → `Indeterminate`, never a false "covered")
 | affirmed
 | `host-rust/src/ffi.rs`; reviewed in `audits/audit-residuals.adoc` §1
 
+| Right-censored `0patch.log` reads on `RunAsPPL=On` or loader-blocked hosts without an `lsass.exe` application line in the log window fail closed to `PatchStatus::Unknown` (`INDETERMINATE`, exit `1`) and never emit a false `MOOT` (exit `0`), while historical `lsass.exe` lines still surface `PatchStatus::Present` (`BLOCKED-INERT`, exit `2`), and odd-byte UTF-16LE tails likewise fail closed
+| affirmed
+| `host-rust/src/collectors/parse.rs::parse_opatch_log`, `host-rust/src/collectors/opatch.rs::read_log_tail_utf16le`, `host-rust/tests/classify_tests.rs::protected_or_blocked_host_never_silently_clears_from_opatch_log`
+
 | The design + public alert (why "just turn off LSA Protection" is not good enough) is complete and on the record
 | affirmed
-| `DESIGN.md`, `README.md`
+| `DESIGN.adoc`, `README.adoc`
 
-| The registry collector was validated on a real Windows host (2026-07-02): live `reg.exe` output for `RunAsPPL=0x1` parsed correctly as On
+| The registry collector was validated on a real Windows host (2026-07-02): live `reg.exe` output for `RunAsPPL=0x1` parsed correctly as `On`
 | affirmed
-| `docs/FIELD-VALIDATION.md` §1; `host-rust/src/collectors/registry.rs`, `parse.rs::parse_runas_ppl`
+| `docs/FIELD-VALIDATION.adoc` §1; `host-rust/src/collectors/registry.rs`, `parse.rs::parse_runas_ppl`
 
 | The 0patch install paths and the patch-status source (the UTF-16LE agent log `C:\ProgramData\0patch\Logs\0patch.log`, `Patch NNNN applied in application X` lines) are field-confirmed on a real install; the speculative `list-patches` CLI was removed
 | affirmed
-| `docs/FIELD-VALIDATION.md` §2–3; `host-rust/src/collectors/opatch.rs`
+| `docs/FIELD-VALIDATION.adoc` §2–3; `host-rust/src/collectors/opatch.rs`
 |===
 
 == What we do NOT claim
 
 * *Field validation is partial, not total.* On 2026-07-02 the collectors were
   exercised against a real Windows host (LSA Protection ON, live 0patch agent
-  installed) via WSL interop — see `docs/FIELD-VALIDATION.md`. What that
-  session established and what it did not:
+  installed) via WSL interop — see link:docs/FIELD-VALIDATION.adoc[`docs/FIELD-VALIDATION.adoc`].
+  What that session established and what it did not:
 ** *Validated:* the registry collector — live `reg.exe` output for
-   `RunAsPPL=0x1` parsed correctly as On.
+   `RunAsPPL=0x1` parsed correctly as `On`.
 ** *Confirmed:* the 0patch install paths (`C:\Program Files
    (x86)\0patch\Agent\`, casing corrected) and the real patch-status source —
    the UTF-16LE agent log `C:\ProgramData\0patch\Logs\0patch.log`. The former
    `0patchConsole.exe list-patches` collector was a guess and has been
    removed; `opatch.rs` was rewritten against the field-confirmed log format.
+** *Right-censored on protected hosts (fails closed, not `BLOCKED-INERT`, without prior log line):*
+   Because `0patch.log` records *applied* patches, a host where `RunAsPPL=On`
+   has always been active blocks `0patchLoader` before any `lsass.exe` patch
+   can apply and be logged. Without a historical `lsass.exe` line in the 2 MiB
+   tail window or a separate unblocked local catalog query, the collector can
+   only report `Unknown` → `INDETERMINATE` (exit `1`, Warning `1002`), not
+   distinguish `BLOCKED-INERT` from `MOOT`.
 ** *NOT yet observed live:* the `Present` path of the patch-status collector
-   — no lsass-targeted patch was outstanding on the validation host, so
+   — no `lsass.exe`-targeted patch was outstanding on the validation host, so
    "`Patch NNNN applied in application lsass.exe`" has never been seen in a
-   real log; the "no lsass line in the recent log ⇒ Absent" inference remains
-   a heuristic.
-** *NOT yet observed live:* the CodeIntegrity 3033/3063 block-event path —
-   the `wevtutil` query ran, but no 0patch block event existed on the host
-   (no user-mode lsass injection attempt was occurring), so the
-   positive-match branch of the event-log collector is unverified in the
-   field.
-* *No end-to-end run exists.* The full "collect → classify → report" path has
-  never executed on the target platform. The 🟢/🔴/⚪ verdict pipeline is
-  proved at the classifier core but not demonstrated end to end.
-* *This is a DESIGN-stage repository.* The container (Layer A policy / Layer B
-  sentinel) described in `DESIGN.md` is specified, not deployed.
+   real log; and when `loader == Loaded`, `Loaded` is inferred from
+   `RunAsPPL=Off` plus absence of recent block events rather than direct
+   module inspection inside `lsass.exe`.
+** *NOT yet observed live:* the CodeIntegrity `3033`/`3063` block-event path —
+   the `wevtutil` query ran, but no 0patch block event existed on the host, so
+   the positive-match branch of the event-log collector is unverified live.
+* *No end-to-end scheduled-task run exists yet.* `installer/Install-LsaSentinel.ps1`
+  is implemented and packaged in `release.yml`, and the Windows collectors
+  type-check/lint on `x86_64-pc-windows-gnu` in CI, but the full installed
+  Scheduled Task → Application Event Log (`1000`/`1001`/`1002`) cycle has not
+  yet been executed end to end on a Windows host.
+* *Layer A fleet policy automation is specified, not deployed.* See
+  link:DESIGN.adoc[`DESIGN.adoc`] §3.1.
 * *No affiliation with ACROS Security / 0patch.* This is independent,
   good-faith analysis.
 
@@ -108,13 +121,11 @@ counter-example, a failing run, or a contradicting source.
 |===
 | Project | 0patch-lsa-sentinel
 | Repository | https://github.com/hyperpolymath/0patch-lsa-sentinel
-| Commit (SHA) | a44dedc10e576407b059bcaea4e0f724b366b25d (re-anchor on the signing commit)
+| Base Commit (SHA) | ab68f55df89c73974b835422a0973aadcd0370ab (`main` base; verify the signed commit updating this receipt via `git log -1 --show-signature AFFIRMATION.adoc`)
 | Branch | main
-| Date (UTC) | 2026-07-02
-| Toolchain | gnatprove (SPARK), idris2, cargo/rustc, zig — versions as recorded in `.tool-versions` / CI at signing time
+| Date (UTC) | 2026-11-02
+| Toolchain | gnatprove 15.1.0 + gprbuild (SPARK), idris2 (pack), rustc/cargo stable, zig 0.15.2 — see `mise.toml` and `.github/workflows/rust-ci.yml`
 | Affirmed by | Jonathan D.A. Jewell <j.d.a.jewell@open.ac.uk>
 |===
 
-_Landed by a signed git commit. Verify with `git log --show-signature` that the
-anchor SHA above matches the commit that introduced (or last updated) this
-affirmation._
+_Landed by a signed git commit. Verify with `git log -1 --show-signature AFFIRMATION.adoc`._

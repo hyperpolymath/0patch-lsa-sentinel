@@ -23,22 +23,27 @@ Physical-state invariants for 0patch-lsa-sentinel. These are hard requirements
 - severity: critical
 
 ### readme-present
-- description: README.md must exist (deep-linked from external outreach — do not rename)
-- run: test -f README.md
+- description: README.adoc must exist
+- run: test -f README.adoc
 - severity: critical
 
 ### design-present
-- description: DESIGN.md must exist (the public alert — do not rename)
-- run: test -f DESIGN.md
+- description: DESIGN.adoc must exist (the public alert)
+- run: test -f DESIGN.adoc
 - severity: critical
 
 ### security-policy
-- description: SECURITY.md must exist
-- run: test -f SECURITY.md
+- description: SECURITY.adoc and .github/SECURITY.md must exist
+- run: test -f SECURITY.adoc && test -f .github/SECURITY.md
+- severity: critical
+
+### repo-deed-present
+- description: Canonical repo deed must exist (one-deed-per-repo, D308/D312)
+- run: test -f 0patch-lsa-sentinel_chora.deed
 - severity: critical
 
 ### ai-manifest
-- description: 0-AI-MANIFEST.a2ml must exist
+- description: 0-AI-MANIFEST.a2ml must exist (co-retained per D313)
 - run: test -f 0-AI-MANIFEST.a2ml
 - severity: critical
 
@@ -48,7 +53,7 @@ Physical-state invariants for 0patch-lsa-sentinel. These are hard requirements
 - severity: critical
 
 ### machine-readable-dir
-- description: .machine_readable/ directory must exist
+- description: .machine_readable/ directory must exist (co-retained per D313)
 - run: test -d .machine_readable
 - severity: critical
 

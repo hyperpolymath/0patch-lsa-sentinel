@@ -9,13 +9,23 @@
 use lsa_sentinel::classify::classify;
 use lsa_sentinel::model::{LoaderPresence, LsaProtection, PatchStatus, Signals, Verdict};
 
-const PROT: [LsaProtection; 3] =
-    [LsaProtection::Unknown, LsaProtection::Off, LsaProtection::On];
-const LOAD: [LoaderPresence; 3] =
-    [LoaderPresence::Unknown, LoaderPresence::Blocked, LoaderPresence::Loaded];
-const PAT: [PatchStatus; 3] =
-    [PatchStatus::Unknown, PatchStatus::Absent, PatchStatus::Present];
+const PROT: [LsaProtection; 3] = [
+    LsaProtection::Unknown,
+    LsaProtection::Off,
+    LsaProtection::On,
+];
+const LOAD: [LoaderPresence; 3] = [
+    LoaderPresence::Unknown,
+    LoaderPresence::Blocked,
+    LoaderPresence::Loaded,
+];
+const PAT: [PatchStatus; 3] = [
+    PatchStatus::Unknown,
+    PatchStatus::Absent,
+    PatchStatus::Present,
+];
 
+/// Enumerate all 27 (`3 * 3 * 3`) input signal combinations.
 fn all_signals() -> impl Iterator<Item = Signals> {
     PROT.iter().flat_map(|&p| {
         LOAD.iter()
@@ -23,6 +33,7 @@ fn all_signals() -> impl Iterator<Item = Signals> {
     })
 }
 
+/// Confirm the Cartesian iterator yields all 27 triples.
 #[test]
 fn covers_all_27_combinations() {
     assert_eq!(all_signals().count(), 27);
@@ -68,7 +79,11 @@ fn blocked_inert_only_when_real_silent_failure() {
 /// The headline operational case: LSA on + lsass patch outstanding = alarm.
 #[test]
 fn the_dangerous_case_is_flagged() {
-    let s = Signals::new(LsaProtection::On, LoaderPresence::Blocked, PatchStatus::Present);
+    let s = Signals::new(
+        LsaProtection::On,
+        LoaderPresence::Blocked,
+        PatchStatus::Present,
+    );
     assert_eq!(classify(s), Verdict::BlockedInert);
     assert_eq!(classify(s).exit_code(), 2);
 }
@@ -76,7 +91,11 @@ fn the_dangerous_case_is_flagged() {
 /// Fail-safe: all-unknown must never read as covered or moot.
 #[test]
 fn all_unknown_is_indeterminate() {
-    let s = Signals::new(LsaProtection::Unknown, LoaderPresence::Unknown, PatchStatus::Unknown);
+    let s = Signals::new(
+        LsaProtection::Unknown,
+        LoaderPresence::Unknown,
+        PatchStatus::Unknown,
+    );
     assert_eq!(classify(s), Verdict::Indeterminate);
 }
 
@@ -144,6 +163,66 @@ fn protected_or_blocked_host_never_silently_clears_from_opatch_log() {
                 "exit code 0 on blocked/unknown host ({protection:?}, block={recent_block})"
             );
         }
+    }
+}
+
+/// CLI smoke check: `--help` and `--version` exit 0 with descriptive output.
+#[test]
+fn cli_help_and_version_succeed() {
+    let exe = env!("CARGO_BIN_EXE_lsa-sentinel");
+    for flag in ["--help", "-h"] {
+        let out = std::process::Command::new(exe)
+            .arg(flag)
+            .output()
+            .expect("spawn lsa-sentinel");
+        assert!(out.status.success(), "{flag} exited {:?}", out.status);
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(stdout.contains("USAGE:"), "missing USAGE in {stdout:?}");
+    }
+    for flag in ["--version", "-V"] {
+        let out = std::process::Command::new(exe)
+            .arg(flag)
+            .output()
+            .expect("spawn lsa-sentinel");
+        assert!(out.status.success(), "{flag} exited {:?}", out.status);
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        assert!(
+            stdout.starts_with("lsa-sentinel "),
+            "unexpected version output {stdout:?}"
+        );
+    }
+}
+
+/// CLI safety check: `--snapshot` consumes flag-like filenames (`-h`) as a path
+/// without suppressing an alarm, and rejects missing/unknown flags with exit 64.
+#[test]
+fn cli_snapshot_consumes_flag_like_filename_and_rejects_bad_usage() {
+    let exe = env!("CARGO_BIN_EXE_lsa-sentinel");
+    let pid = std::process::id();
+    let dir = std::env::temp_dir().join(format!("lsa-sentinel-cli-{pid}"));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).expect("create temp dir");
+    let dash_h = dir.join("-h");
+    let snap = "protection = on\nloader = blocked\npatches = present\n";
+    std::fs::write(&dash_h, snap).expect("write -h snapshot");
+
+    let out = std::process::Command::new(exe)
+        .current_dir(&dir)
+        .args(["--snapshot", "-h", "--json"])
+        .output()
+        .expect("spawn lsa-sentinel --snapshot -h");
+    let _ = std::fs::remove_dir_all(&dir);
+
+    assert_eq!(out.status.code(), Some(2), "alarm suppressed: {out:?}");
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(stdout.contains("BLOCKED-INERT"), "unexpected {stdout:?}");
+
+    for bad in [vec!["--snapshot"], vec!["--bogus"]] {
+        let out = std::process::Command::new(exe)
+            .args(&bad)
+            .output()
+            .expect("spawn lsa-sentinel with bad args");
+        assert_eq!(out.status.code(), Some(64), "bad args {bad:?}: {out:?}");
     }
 }
 

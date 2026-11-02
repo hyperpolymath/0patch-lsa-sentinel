@@ -12,6 +12,7 @@ use std::process::Command;
 
 const QUERY: &str = "*[System[(EventID=3033 or EventID=3063)]]";
 
+/// Query the Windows CodeIntegrity Operational log to determine [`LoaderPresence`].
 pub fn loader_presence(protection: LsaProtection) -> Result<LoaderPresence, String> {
     // A protected lsass categorically excludes the unsigned loader.
     if protection == LsaProtection::On {
@@ -35,5 +36,8 @@ pub fn loader_presence(protection: LsaProtection) -> Result<LoaderPresence, Stri
     }
 
     let text = String::from_utf8_lossy(&out.stdout);
-    Ok(loader_from_signals(protection, eventlog_mentions_loader_block(&text)))
+    Ok(loader_from_signals(
+        protection,
+        eventlog_mentions_loader_block(&text),
+    ))
 }
