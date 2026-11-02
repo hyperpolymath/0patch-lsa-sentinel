@@ -1,4 +1,9 @@
 # SPDX-License-Identifier: MPL-2.0
+# Self-contained execution of the shared estate governance gates pinned to
+# metadatastician/standards@d3e4b485a2af90c92a8e18af0888cd19cb132cd9
+# (matches rsr-template-repo pattern so repositories whose selected-actions
+# Administration setting has not yet been widened to metadatastician/* do not
+# hit workflow_call startup_failure).
 name: Governance
 
 on:
@@ -13,13 +18,107 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  actions: read
   contents: read
 
 jobs:
   governance:
-    uses: metadatastician/standards/.github/workflows/governance-reusable.yml@d3e4b485a2af90c92a8e18af0888cd19cb132cd9
+    name: Estate Governance & Workflow Security Policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
-      actions: read
       contents: read
-      security-events: write
+    env:
+      STANDARDS_PIN: 'd3e4b485a2af90c92a8e18af0888cd19cb132cd9'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout pinned metadatastician/standards gates
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: metadatastician/standards
+          ref: d3e4b485a2af90c92a8e18af0888cd19cb132cd9
+          path: .standards-checkout
+          sparse-checkout: |
+            scripts
+            rhodium-standard-repositories/actions-allowlist
+            .machine_readable
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Stage standards scripts outside workspace
+        run: |
+          set -euo pipefail
+          cp -R .standards-checkout "$RUNNER_TEMP/standards"
+          rm -rf .standards-checkout
+
+      - name: Allowlist preflight
+        run: |
+          bash "$RUNNER_TEMP/standards/scripts/check-allowed-actions.sh" \
+            "$RUNNER_TEMP/standards/rhodium-standard-repositories/actions-allowlist/allowed-actions.json" \
+            .github/workflows
+
+      - name: Duplicate YAML keys & workflow SPDX/permissions
+        run: |
+          set -euo pipefail
+          bash "$RUNNER_TEMP/standards/scripts/check-workflow-duplicate-keys.sh" .github/workflows
+          for file in .github/workflows/*.yml .github/workflows/*.yaml; do
+            [ -f "$file" ] || continue
+            if ! awk '/^---[[:space:]]*$/ { next } /^#/ { print; next } { exit }' "$file" \
+                 | grep -q "^# SPDX-License-Identifier:"; then
+              echo "::error::Missing SPDX-License-Identifier in $file"
+              exit 1
+            fi
+            if [ "$(yq 'has("permissions")' "$file")" != "true" ]; then
+              echo "::error::Missing top-level permissions in $file"
+              exit 1
+            fi
+          done
+
+      - name: Verify action pins resolve upstream & lockfile ledger
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          bash "$RUNNER_TEMP/standards/scripts/check-action-pins-resolve.sh" .
+          export ACTIONS_LOCK_VERIFIER="$RUNNER_TEMP/standards/scripts/update-actions-lock.sh"
+          rc=0
+          bash "$RUNNER_TEMP/standards/scripts/check-actions-lock-gate.sh" || rc=$?
+          if [ "$rc" -eq 3 ] && grep -qxF "$GITHUB_REPOSITORY" "$RUNNER_TEMP/standards/.machine_readable/lock-allow.txt"; then
+            echo "::notice::actions-lock debt is ledgered for $GITHUB_REPOSITORY (gate exit 3)."
+            rc=0
+          fi
+          exit "$rc"
+
+      - name: RSR v2.0 profile, internal links & language policy
+        run: |
+          set -euo pipefail
+          RSR_GATES="$RUNNER_TEMP/standards/.machine_readable/template-capability-gates.toml" \
+            bash "$RUNNER_TEMP/standards/scripts/check-rsr-profile.sh" .
+          bash "$RUNNER_TEMP/standards/scripts/link-rot-guard.sh" .
+
+          bad_py="$(git ls-files '*.py' || true)"
+          if [ -n "$bad_py" ]; then
+            echo "::error::Banned Python files detected: $bad_py"
+            exit 1
+          fi
+          bad_locks="$(git ls-files 'package-lock.json' '**/package-lock.json' 'yarn.lock' '**/yarn.lock' 'pnpm-lock.yaml' '**/pnpm-lock.yaml' || true)"
+          if [ -n "$bad_locks" ]; then
+            echo "::error::Banned npm/yarn/pnpm lockfiles detected: $bad_locks"
+            exit 1
+          fi
+          if [ -f tsconfig.json ] || [ -f Makefile ] || [ -f GNUmakefile ]; then
+            echo "::error::Banned root config (tsconfig.json / Makefile) detected"
+            exit 1
+          fi
+
+          shopt -s nullglob
+          for doc in *.md *.adoc; do
+            [ "$doc" = "CHANGELOG.adoc" ] || [ "$doc" = "CHANGELOG.md" ] && continue
+            if grep -nEi '^[[:space:]]*[*_]{0,2}Version[*_]{0,2}[[:space:]]*[:=][[:space:]]*v?[0-9]+\.[0-9]+\.[0-9]+' "$doc"; then
+              echo "::error::Pinned Version string in top-level doc $doc (rule R5b)"
+              exit 1
+            fi
+          done

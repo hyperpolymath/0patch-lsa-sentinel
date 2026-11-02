@@ -18,13 +18,15 @@ https://semver.org/spec/v2.0.0.html[Semantic Versioning].
   `+PatchStatus::Absent+` → `+MOOT+` all-clear (exit `0`) when no
   `+lsass.exe+` application appears in `+0patch.log+`. Bounded log tail
   reads with `+Read::take+` against concurrent appends.
-* *CI, standards coordinates, and Dependabot*: migrated reusable workflow
-  coordinates to `+metadatastician/standards+`, replaced the invalid
-  `+codeql-action+` pin with `+codeql-reusable.yml+` (`+actions+` +
-  `+rust+`), removed `+secrets: inherit+` from `+secret-scanner.yml+`
-  (standards#1108 §6b), fixed `+release.yml+` packaging path
-  (`+installer/README.adoc+`), added `+rust-ci.yml+` cross-language
-  verification (Rust portable + Windows target, SPARK/Ada C-ABI
+* *CI, standards coordinates, and Dependabot*: aligned workflows with the
+  self-contained `+rsr-template-repo+` pattern pinned to
+  `+metadatastician/standards@d3e4b485+` (avoiding cross-owner
+  `+workflow_call+` `+startup_failure+` under repository `+selected-actions+`
+  policy), replaced the invalid `+codeql-action+` pin with v4.38.0 scanning
+  both `+actions+` and `+rust+`, removed `+secrets: inherit+` from
+  `+secret-scanner.yml+` (standards#1108 §6b), fixed `+release.yml+`
+  packaging path (`+installer/README.adoc+`), added `+rust-ci.yml+`
+  cross-language verification (Rust portable + Windows target, SPARK/Ada C-ABI
   differential test, Zig FFI, Idris2 ABI proofs, DEED conformance, SPARK
   theatre gate), and scoped `+.github/dependabot.yml+` to `+github-actions+`
   and `+/host-rust+`.
