@@ -55,7 +55,8 @@ jobs:
         run: |
           set -o pipefail
           if ! cargo fmt --all -- --check 2>&1 | tee /tmp/cargo.log; then
-            head -n 25 /tmp/cargo.log | while IFS= read -r l; do echo "::error::$l"; done
+            msg="$(awk 'NF { printf "%s | ", $0 }' /tmp/cargo.log | cut -c1-3500)"
+            echo "::error::${msg}"
             exit 1
           fi
 
@@ -224,6 +225,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Checkout pinned DEED linter from metadatastician/standards
@@ -246,16 +248,52 @@ jobs:
           xargs node "$RUNNER_TEMP/deed-tools/deed_lint.js" < "$RUNNER_TEMP/deeds"
           xargs node "$RUNNER_TEMP/deed-tools/deed_lint.js" --egress < "$RUNNER_TEMP/deeds"
 
-      - name: Verify Mustfile & Dustfile contractile invariants
+      - name: Enforce Mustfile contractile invariants (including commit signature)
         run: |
           set -euo pipefail
-          for cf in .machine_readable/contractiles/Mustfile.a2ml .machine_readable/contractiles/Dustfile.a2ml; do
-            while IFS= read -r cmd; do
-              [ "$cmd" = "git verify-commit HEAD" ] && continue
-              echo "[contractile $cf] $cmd"
-              bash -c "$cmd"
-            done < <(awk '/^- run:[[:space:]]*/ { sub(/^- run:[[:space:]]*/, ""); if ($0 ~ /^".*"$/) { sub(/^"/, ""); sub(/"$/, ""); } print }' "$cf")
-          done
+          GNUPGHOME="$(mktemp -d)"
+          export GNUPGHOME
+          chmod 700 "$GNUPGHOME"
+          curl --proto '=https' --tlsv1.2 -fsSL https://github.com/web-flow.gpg | gpg --batch --import
+          curl --proto '=https' --tlsv1.2 -fsSL https://github.com/hyperpolymath.gpg | gpg --batch --import || true
+          while IFS= read -r cmd; do
+            echo "[mustfile] $cmd"
+            bash -c "$cmd"
+          done < <(awk '/^- run:[[:space:]]*/ { sub(/^- run:[[:space:]]*/, ""); if ($0 ~ /^".*"$/) { sub(/^"/, ""); sub(/"$/, ""); } print }' .machine_readable/contractiles/Mustfile.a2ml)
+          rm -rf "$GNUPGHOME"
+
+      - name: Run Dustfile advisory hygiene checks (non-blocking)
+        run: |
+          set -uo pipefail
+          while IFS=$'\t' read -r name sev cmd; do
+            echo "[dustfile:${sev}] ${name}: ${cmd}"
+            if ! bash -c "$cmd"; then
+              if [ "$sev" = "info" ]; then
+                echo "::notice::Dustfile advisory (${name}) reported drift: ${cmd}"
+              else
+                echo "::warning::Dustfile advisory (${name}) reported drift: ${cmd}"
+              fi
+            fi
+          done < <(awk '
+            function flush() {
+              if (name != "" && cmd != "") print name "\t" sev "\t" cmd
+              name = ""; sev = "warning"; cmd = ""
+            }
+            /^###[[:space:]]+/ { flush(); name = $2; next }
+            /^- run:[[:space:]]*/ {
+              line = $0
+              sub(/^- run:[[:space:]]*/, "", line)
+              if (line ~ /^".*"$/) { sub(/^"/, "", line); sub(/"$/, "", line) }
+              cmd = line
+              next
+            }
+            /^- severity:[[:space:]]*/ {
+              sev = $0
+              sub(/^- severity:[[:space:]]*/, "", sev)
+              next
+            }
+            END { flush() }
+          ' .machine_readable/contractiles/Dustfile.a2ml)
 
       - name: Check SPARK units for hollow proof claims (standards#135)
         run: |

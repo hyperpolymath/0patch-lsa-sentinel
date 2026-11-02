@@ -58,7 +58,7 @@ counter-example, a failing run, or a contradicting source.
 | affirmed
 | `host-rust/src/ffi.rs`; reviewed in `audits/audit-residuals.adoc` §1
 
-| Right-censored `0patch.log` reads on `RunAsPPL=On` or loader-blocked hosts fail closed to `PatchStatus::Unknown` (`INDETERMINATE`, exit `1`) and never emit a false `MOOT` (exit `0`), and odd-byte UTF-16LE tails likewise fail closed
+| Right-censored `0patch.log` reads on `RunAsPPL=On` or loader-blocked hosts without an `lsass.exe` application line in the log window fail closed to `PatchStatus::Unknown` (`INDETERMINATE`, exit `1`) and never emit a false `MOOT` (exit `0`), while historical `lsass.exe` lines still surface `PatchStatus::Present` (`BLOCKED-INERT`, exit `2`), and odd-byte UTF-16LE tails likewise fail closed
 | affirmed
 | `host-rust/src/collectors/parse.rs::parse_opatch_log`, `host-rust/src/collectors/opatch.rs::read_log_tail_utf16le`, `host-rust/tests/classify_tests.rs::protected_or_blocked_host_never_silently_clears_from_opatch_log`
 

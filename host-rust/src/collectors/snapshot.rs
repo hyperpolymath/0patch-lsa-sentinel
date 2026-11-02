@@ -17,6 +17,7 @@
 use crate::collectors::SignalSource;
 use crate::model::{LoaderPresence, LsaProtection, PatchStatus, Signals};
 
+/// In-memory `key = value` host signal snapshot.
 pub struct Snapshot {
     text: String,
 }
@@ -26,11 +27,10 @@ impl Snapshot {
     /// keys/values degrade to `Unknown` at [`SignalSource::collect`] time).
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(text: impl Into<String>) -> Self {
-        Snapshot {
-            text: text.into(),
-        }
+        Snapshot { text: text.into() }
     }
 
+    /// Read at most 64 KiB from `path` into a [`Snapshot`].
     pub fn from_path(path: &str) -> Result<Self, String> {
         use std::io::Read;
         // Bounded read: a host snapshot is a handful of lines. Capping at 64 KiB
@@ -46,6 +46,7 @@ impl Snapshot {
         Ok(Snapshot::from_str(buf))
     }
 
+    /// Look up the first `key = value` entry case-insensitively.
     fn value(&self, key: &str) -> Option<String> {
         for line in self.text.lines() {
             let line = line.split('#').next().unwrap_or("").trim();
@@ -60,6 +61,8 @@ impl Snapshot {
 }
 
 impl SignalSource for Snapshot {
+    /// Parse `protection`, `loader`, and `patches` from the snapshot text,
+    /// degrading missing or unrecognised tokens to `Unknown`.
     fn collect(&self) -> Result<Signals, String> {
         let protection = match self.value("protection").as_deref() {
             Some("on") => LsaProtection::On,

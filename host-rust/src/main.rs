@@ -13,9 +13,9 @@
 //! "don't show again".
 
 use lsa_sentinel::classify::classify;
-use lsa_sentinel::collectors::SignalSource;
 use lsa_sentinel::collectors::collect_live;
 use lsa_sentinel::collectors::snapshot::Snapshot;
+use lsa_sentinel::collectors::SignalSource;
 use lsa_sentinel::report::{render, render_machine};
 
 const USAGE: &str = "\
@@ -35,27 +35,60 @@ EXIT CODES:
    69   Live collection unavailable on non-Windows host
    74   Snapshot I/O error";
 
+/// Parsed command-line action.
+enum CliAction {
+    Help,
+    Version,
+    Run(Option<String>, bool),
+}
+
+/// Parse command-line arguments sequentially so option values (such as a
+/// `--snapshot` path named `-h`) are never misinterpreted as flags.
+fn parse_args(args: &[String]) -> Result<CliAction, String> {
+    let mut snapshot: Option<String> = None;
+    let mut json = false;
+    let mut it = args.iter();
+
+    while let Some(arg) = it.next() {
+        match arg.as_str() {
+            "-h" | "--help" => return Ok(CliAction::Help),
+            "-V" | "--version" => return Ok(CliAction::Version),
+            "--json" => json = true,
+            "--snapshot" => {
+                let Some(path) = it.next() else {
+                    return Err("--snapshot requires a file path".to_string());
+                };
+                snapshot = Some(path.clone());
+            }
+            other => return Err(format!("unknown argument '{other}' (try --help)")),
+        }
+    }
+
+    Ok(CliAction::Run(snapshot, json))
+}
+
 /// Parse CLI flags, collect or load host signals, classify, and emit the verdict.
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
 
-    if args.iter().any(|a| a == "-h" || a == "--help") {
-        println!("{USAGE}");
-        return;
-    }
-    if args.iter().any(|a| a == "-V" || a == "--version") {
-        println!("lsa-sentinel {}", env!("CARGO_PKG_VERSION"));
-        return;
-    }
-
-    let json = args.iter().any(|a| a == "--json");
-
-    let signals = if let Some(i) = args.iter().position(|a| a == "--snapshot") {
-        let Some(path) = args.get(i + 1) else {
-            eprintln!("error: --snapshot requires a file path");
+    let (snapshot, json) = match parse_args(&args) {
+        Ok(CliAction::Help) => {
+            println!("{USAGE}");
+            return;
+        }
+        Ok(CliAction::Version) => {
+            println!("lsa-sentinel {}", env!("CARGO_PKG_VERSION"));
+            return;
+        }
+        Ok(CliAction::Run(snapshot, json)) => (snapshot, json),
+        Err(msg) => {
+            eprintln!("error: {msg}");
             std::process::exit(64);
-        };
-        match Snapshot::from_path(path).and_then(|s| s.collect()) {
+        }
+    };
+
+    let signals = if let Some(path) = snapshot {
+        match Snapshot::from_path(&path).and_then(|s| s.collect()) {
             Ok(s) => s,
             Err(e) => {
                 eprintln!("error: {e}");

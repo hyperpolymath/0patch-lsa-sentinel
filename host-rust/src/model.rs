@@ -58,6 +58,7 @@ impl Verdict {
         }
     }
 
+    /// Status glyph used in human-facing output.
     pub fn glyph(self) -> &'static str {
         match self {
             Verdict::OpenCovered => "🟢",
@@ -67,6 +68,7 @@ impl Verdict {
         }
     }
 
+    /// Stable uppercase verdict identifier used in logs and machine output.
     pub fn tag(self) -> &'static str {
         match self {
             Verdict::OpenCovered => "OPEN-COVERED",
@@ -78,6 +80,7 @@ impl Verdict {
 }
 
 impl From<Verdict> for i32 {
+    /// Convert a [`Verdict`] into its canonical C-ABI integer discriminant.
     fn from(v: Verdict) -> i32 {
         v as i32
     }
@@ -85,6 +88,8 @@ impl From<Verdict> for i32 {
 
 impl TryFrom<i32> for Verdict {
     type Error = i32;
+
+    /// Decode a canonical C-ABI integer discriminant into a [`Verdict`].
     fn try_from(x: i32) -> Result<Verdict, i32> {
         match x {
             0 => Ok(Verdict::Indeterminate),
