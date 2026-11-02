@@ -123,7 +123,7 @@ pub fn parse_opatch_log(log_text: &str, loader: LoaderPresence) -> PatchStatus {
 /// unpaired surrogate, so a corrupt or mis-encoded file maps to `Unknown`
 /// upstream rather than being half-read.
 pub fn decode_utf16le(bytes: &[u8]) -> Option<String> {
-    if bytes.len() % 2 != 0 {
+    if (bytes.len() & 1) != 0 {
         return None;
     }
     let units: Vec<u16> = bytes

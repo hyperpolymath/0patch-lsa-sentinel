@@ -82,7 +82,7 @@ fn read_log_tail_utf16le(path: &Path, cap: u64) -> Option<String> {
     f.take(cap).read_to_end(&mut bytes).ok()?;
     // If a concurrent append caught a UTF-16 code unit half-written at EOF,
     // trim the single trailing byte rather than failing the whole window.
-    if bytes.len() % 2 != 0 {
+    if (bytes.len() & 1) != 0 {
         bytes.pop();
     }
     decode_utf16le(&bytes)

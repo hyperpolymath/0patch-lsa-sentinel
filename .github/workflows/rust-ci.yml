@@ -52,11 +52,11 @@ jobs:
 
       - name: Cargo check (portable)
         working-directory: host-rust
-        run: cargo check --locked --all-targets
+        run: cargo check --locked --all-targets --message-format=github
 
       - name: Cargo clippy (-D warnings)
         working-directory: host-rust
-        run: cargo clippy --locked --all-targets -- -D warnings
+        run: cargo clippy --locked --all-targets --message-format=github -- -D warnings
 
       - name: Cargo test (unit + exhaustive 27-state truth table)
         working-directory: host-rust
@@ -65,8 +65,8 @@ jobs:
       - name: Cargo check + clippy on x86_64-pc-windows-gnu (live collectors)
         working-directory: host-rust
         run: |
-          cargo check --locked --all-targets --target x86_64-pc-windows-gnu
-          cargo clippy --locked --all-targets --target x86_64-pc-windows-gnu -- -D warnings
+          cargo check --locked --lib --bins --tests --target x86_64-pc-windows-gnu --message-format=github
+          cargo clippy --locked --lib --bins --tests --target x86_64-pc-windows-gnu --message-format=github -- -D warnings
 
   verified-seam:
     name: SPARK kernel + Zig FFI + C-ABI differential test
@@ -120,9 +120,10 @@ jobs:
       - name: Differential test (Rust mirror vs linked SPARK kernel over C ABI)
         working-directory: host-rust
         run: |
-          ADALIB_DIR="$(dirname "$(gcc -print-file-name=adalib/libgnat.a)")"
+          ADALIB_DIR="$(find /usr/lib/gcc -type d -name adalib | head -n 1)"
           echo "Using GNAT_ADALIB=$ADALIB_DIR"
-          GNAT_ADALIB="$ADALIB_DIR" cargo test --locked --features verified-core
+          GNAT_ADALIB="$ADALIB_DIR" LD_LIBRARY_PATH="${ADALIB_DIR}:${LD_LIBRARY_PATH:-}" \
+            cargo test --locked --features verified-core --message-format=github
 
   idris2-abi:
     name: Idris2 ABI totality & round-trip proofs
