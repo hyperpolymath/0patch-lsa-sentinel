@@ -135,7 +135,10 @@ jobs:
         working-directory: host-rust
         run: |
           set -o pipefail
-          ADALIB_DIR="$(find /usr/lib/gcc -type d -name adalib | head -n 1)"
+          ADALIB_DIR="$(gnatls -v | awk '/\/adalib\/?$/ { gsub(/^[[:space:]]+|\/$/, ""); print; exit }')"
+          if [ -z "$ADALIB_DIR" ]; then
+            ADALIB_DIR="$(find /usr/lib/gcc -type d -name adalib | sort -V | tail -n 1)"
+          fi
           echo "Using GNAT_ADALIB=$ADALIB_DIR"
           if ! GNAT_ADALIB="$ADALIB_DIR" LD_LIBRARY_PATH="${ADALIB_DIR}:${LD_LIBRARY_PATH:-}" \
             cargo test --locked --features verified-core 2>&1 | tee /tmp/cargo.log; then
