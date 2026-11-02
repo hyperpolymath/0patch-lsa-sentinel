@@ -29,10 +29,11 @@ pub trait SignalSource {
 pub fn collect_live() -> Result<Signals, String> {
     let protection = registry::lsa_protection()?;
     let loader = eventlog::loader_presence(protection)?;
-    let patches = opatch::lsass_patch_status()?;
+    let patches = opatch::lsass_patch_status(loader)?;
     Ok(Signals { protection, loader, patches })
 }
 
+/// Stub for non-Windows hosts directing callers to `--snapshot <file>`.
 #[cfg(not(windows))]
 pub fn collect_live() -> Result<Signals, String> {
     Err("live collection is Windows-only; use --snapshot <file> on this platform".into())

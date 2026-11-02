@@ -52,16 +52,16 @@ We follow https://www.conventionalcommits.org/[Conventional Commits]:
 == Cross-references
 
 This root document exists because the estate docs gate
-(`hyperpolymath/standards` `scripts/check-docs-presence.sh`) requires
+(`metadatastician/standards` `scripts/check-docs-presence.sh`) requires
 `CONTRIBUTING.md`, `CONTRIBUTING.adoc`, or `3-practice/CONTRIBUTING.adoc`
 at the repository root. Estate documentation policy: AsciiDoc by default —
-see `hyperpolymath/standards`.
+see `metadatastician/standards`.
 
 == Signed commits
 
 Every commit that reaches the default branch must be signed; a ruleset refuses
 unsigned pushes. Estate policy:
-https://github.com/hyperpolymath/standards/blob/main/docs/SIGNING-POLICY.adoc[SIGNING-POLICY].
+https://github.com/metadatastician/standards/blob/main/docs/SIGNING-POLICY.adoc[SIGNING-POLICY].
 
 * **People and interactive agents** sign with an SSH key registered on GitHub
   as a *signing* key (`gpg.format=ssh`, `user.signingkey=<key>.pub`,

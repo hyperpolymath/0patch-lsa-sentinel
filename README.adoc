@@ -1,46 +1,108 @@
 == 0patch-lsa-sentinel
 
-*A public alert + design for containing the 0patch ↔ Windows LSA
-Protection conflict.*
+*A public alert, reverse-isolation container design, and formally verified
+watcher for the 0patch ↔ Windows LSA Protection conflict.*
 
 Windows *LSA Protection* (`+RunAsPPL+`) silently blocks the 0patch agent
-from loading its loader into `+lsass.exe+`, which means *0patch’s
-lsass-targeted micropatches stop applying* — and, per the vendor’s own
-guidance, you may never notice, because the only warning is a
-dismissable popup with a _"`Don’t show this message again`"_ checkbox.
+from loading its loader (`+0patchLoaderX64.dll+`) into `+lsass.exe+`,
+which means *0patch’s lsass-targeted micropatches stop applying* — and,
+per the vendor’s own guidance, you may never notice, because the only
+warning is a dismissable popup with a _"`Don’t show this message again`"_
+checkbox.
 
 You can *suppress* this. You cannot *fix* it from the customer side.
 This repo exists so the trade-off is *public, documented, and loud*
 instead of silently hidden.
 
-➡️ *Read link:./DESIGN.md[`+DESIGN.md+`]* — in particular the
-link:++./DESIGN.md#%EF%B8%8F-read-this--why-just-turn-off-lsa-protection-is-not-good-enough++[*⚠️
-READ THIS* alert section] on why "`just turn off LSA Protection`" is not
-good enough, and why *a patch that cannot be deployed is not the same as
-a machine that is protected.*
+➡️ *Read link:./DESIGN.adoc[`+DESIGN.adoc+`]* — in particular the
+link:./DESIGN.adoc#read-this-alert[*⚠️ READ THIS* alert section] on why
+"`just turn off LSA Protection`" is not good enough, and why *a patch
+that cannot be deployed is not the same as a machine that is protected.*
 
-=== What this is
+=== What is in this repository
 
 [arabic]
-. *An alert.* Most operators, faced with the popup, will tick "`don’t
-show again`" and move on — leaving a host that _reports as protected
-while it is not._ This documents why that is the wrong default.
-. *A design (not yet built).* A two-layer "`reverse isolation`"
-container:
-* *Layer A — policy:* a penned `+lsa-open+` machine-class, so the
-weakening never leaks to the wider estate; default posture stays
-LSA-Protection-*on*.
-* *Layer B — sentinel:* a read-only watcher that re-enables the signal
-the popup suppresses and routes it to an *unsilenceable* work-order (🟢
-covered / 🔴 silently-inert / ⚪ moot).
+. *The public alert (`+DESIGN.adoc+`).* Most operators, faced with the
+popup, will tick "`don’t show again`" and move on — leaving a host that
+_reports as protected while it is not._ `+DESIGN.adoc+` documents why
+that is the wrong default.
+. *Two-layer reverse-isolation container design
+(link:./DESIGN.adoc#the-container[§3]):*
+* *Layer A — policy (specified):* a penned `+lsa-open+` machine-class,
+so any deliberate weakening never leaks to the wider estate; default
+posture stays LSA-Protection-*on*.
+* *Layer B — sentinel (implemented core + Windows scheduled-task
+installer):* a read-only watcher (`+lsa-sentinel+`) that converts silent
+coverage loss into an *unsilenceable* verdict routed to the Windows
+Application Event Log:
+** 🔴 `+BLOCKED-INERT+` (exit `2`, Error `1001`) — lsass-targeted patches
+exist while the loader is blocked from `+lsass.exe+`.
+** 🟠 `+INDETERMINATE+` (exit `1`, Warning `1002`) — insufficient or
+right-censored signal; investigate rather than assume coverage.
+** 🟢 `+OPEN-COVERED+` (exit `0`, Information `1000`) — LSA Protection
+off and no recent loader-block event (loader presence inferred rather
+than inspected inside `+lsass.exe+`), with an `+lsass.exe+` application
+recorded in the `+0patch.log+` window (credential-dump protection
+forfeited).
+** ⚪ `+MOOT+` (exit `0`, Information `1000`) — loader inferred unblocked
+and no `+lsass.exe+` application recorded in the `+0patch.log+` window.
+. *Four-language verified classifier & ABI seam:*
+* `+core-spark/+` — SPARK/Ada decision kernel
+(`+Sentinel.Classifier.Classify+`), proved pure, total, and postcondition-conforming
+with `+gnatprove+`.
+* `+abi-idris2/+` — Idris2 totality-checked C-ABI encoding round-trip
+and truth-table proofs (`+Sentinel.ABI+`).
+* `+ffi-zig/+` — Zig 0.15 C-ABI header (`+sentinel.h+`) and independent
+reference implementation (`+sentinel_classify_ref+`).
+* `+host-rust/+` — zero-dependency Rust CLI, cross-platform `+--snapshot+`
+evaluator, exhaustive 27-state differential test suite, and Windows live
+collectors (`+reg.exe+`, `+wevtutil.exe+`, and UTF-16LE `+0patch.log+`).
+* `+installer/+` — PowerShell scheduled-task installer/uninstaller
+(link:./installer/README.adoc[`+installer/README.adoc+`]).
 . *Open questions for the 0patch / ACROS Security team* — see
-link:./DESIGN.md#4-the-direct-ask-to-0patch-public-on-the-record[`+DESIGN.md+`
-§4].
+link:./DESIGN.adoc#the-direct-ask-to-0patch[`+DESIGN.adoc+` §4] and
+link:./outreach/STATUS.adoc[`+outreach/STATUS.adoc+`].
 
-=== Status
+=== Status & verification honesty
 
-`+DESIGN+` — documentation and questions only. No agent code yet. Build
-order in link:./DESIGN.md#6-build-order-when-greenlit[`+DESIGN.md+` §6].
+* *Proven / tested:* In CI (`+.github/workflows/rust-ci.yml+`), the Rust
+host crate (`+check+`, `+clippy -D warnings+`, unit + 27-state tests,
+and `+x86_64-pc-windows-gnu+` live-collector check/clippy) is
+differentially tested over the C ABI against the linked SPARK static
+library (`+libsentinel_core.a+`), alongside Zig 0.15 FFI unit tests,
+Idris2 totality and round-trip proofs, DEED + ADR-009 egress validation,
+and SPARK anti-theatre source checks. Full `+gnatprove+` proof discharge
+runs locally via `+just prove+` / `+just all+` (recorded in
+link:./AFFIRMATION.adoc[`+AFFIRMATION.adoc+`]).
+* *Partially field-validated (`+2026-07-02+`):* Live `+reg.exe+`
+`+RunAsPPL+` parsing, `+0patch\Agent+` paths, and the UTF-16LE
+`+C:\ProgramData\0patch\Logs\0patch.log+` format were confirmed against a
+real Windows host with LSA Protection ON and a licensed 0patch agent
+(see link:./docs/FIELD-VALIDATION.adoc[`+docs/FIELD-VALIDATION.adoc+`]).
+* *Fail-safe under `+RunAsPPL+` right-censorship:* Because `+0patch.log+`
+records *applied* patches, a host with `+RunAsPPL=On+` blocks
+`+0patchLoader+` before any `+lsass.exe+` patch can apply and be logged.
+When the loader is blocked and no historical `+lsass.exe+` application
+appears in the log window, the collector yields `+Unknown+` →
+`+INDETERMINATE+` (exit `1`), never a false `+MOOT+` all-clear.
+* *Not yet demonstrated live:* A live `+Present+` (`+BLOCKED-INERT+`)
+trigger on a Windows host with an active lsass-targeted 0patch
+micropatch, an unblocked local patch-catalog query independent of
+`+0patch.log+`, and Layer A fleet policy automation. Read
+link:./AFFIRMATION.adoc[`+AFFIRMATION.adoc+`] and
+link:./AUDIT.adoc[`+AUDIT.adoc+`] for the full dated verification boundary.
+
+=== Quick start
+
+[source,bash]
+----
+just --list                                                      # inspect cross-toolchain recipes
+cargo test --locked --manifest-path host-rust/Cargo.toml         # portable Rust + 27-state suite
+cargo run --manifest-path host-rust/Cargo.toml -- --snapshot host.snap
+----
+
+For architectural details across the four language trees, see
+link:./docs/EXPLAINME.adoc[`+docs/EXPLAINME.adoc+`].
 
 === Note on the name
 
@@ -51,4 +113,5 @@ affiliated with or endorsed by ACROS Security.
 
 === Licence
 
-Documentation/prose: *CC-BY-SA-4.0*. Any code added later: *MPL-2.0*.
+Code, build manifests, and machine-readable specifications: *MPL-2.0*.
+Documentation and prose: *CC-BY-SA-4.0*. See `+LICENSE+` and `+LICENSES/+`.

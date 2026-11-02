@@ -6,12 +6,17 @@
 //! (which is unit-tested cross-platform). Value absent (`reg` exits non-zero)
 //! means protection is not configured, i.e. effectively off.
 //! FIELD-VALIDATED 2026-07-02 on a real host (`RunAsPPL=0x1` correctly read
-//! as On) — see `docs/FIELD-VALIDATION.md`.
+//! as On) — see `docs/FIELD-VALIDATION.adoc`.
 
 use crate::collectors::parse::parse_runas_ppl;
 use crate::model::LsaProtection;
 use std::process::Command;
 
+/// Query `HKLM\SYSTEM\CurrentControlSet\Control\Lsa\RunAsPPL` via `reg.exe`.
+///
+/// Non-zero exit from `reg.exe` indicates the value is absent (LSA Protection
+/// not configured -> [`LsaProtection::Off`]); malformed output parses to
+/// [`LsaProtection::Unknown`].
 pub fn lsa_protection() -> Result<LsaProtection, String> {
     let out = Command::new("reg")
         .args([

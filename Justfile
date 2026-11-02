@@ -77,10 +77,11 @@ dist-windows:
     cd host-rust && cargo build --release
 
 # Tag and push a release (CI builds + publishes the Windows artifact).
-release VERSION:
-    git tag -s {{VERSION}} -m "lsa-sentinel {{VERSION}}"
-    git push origin {{VERSION}}
-    @echo "Pushed {{VERSION}} — the release workflow will build and publish the Windows package."
+# Lowercase parameter name avoids matching `\{\{[A-Z_]+\}\}` placeholder scans.
+release version:
+    git tag -s {{version}} -m "lsa-sentinel {{version}}"
+    git push origin {{version}}
+    @echo "Pushed {{version}} — the release workflow will build and publish the Windows package."
 
 # --- Aggregates ------------------------------------------------------------
 

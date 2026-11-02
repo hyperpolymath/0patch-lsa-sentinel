@@ -7,39 +7,44 @@
 # Used by: scripts/check-root-shape.sh
 # Format: one entry per line; '#' starts a comment; trailing '/' marks a directory.
 
-# ─── Authority / governance files ────────────────────────────────────────────
-README.md                  # entry point — deep-linked from external outreach (do not rename)
-DESIGN.md                  # the public alert + design — deep-linked (do not rename)
+# ─── Authority / governance / documentation files ────────────────────────────
+README.adoc                # entry point (AsciiDoc-by-default, ADR-004)
+DESIGN.adoc                # the public alert + reverse-isolation container design
 AUDIT.adoc
 AFFIRMATION.adoc
 GOVERNANCE.adoc
 MAINTAINERS.adoc
-CONTRIBUTING.md
-SECURITY.md
-CODE_OF_CONDUCT.md
-CHANGELOG.md
+CONTRIBUTING.adoc
+SECURITY.adoc
+CODE_OF_CONDUCT.adoc
+CHANGELOG.adoc
 0-AI-MANIFEST.a2ml
+0patch-lsa-sentinel_chora.deed   # one-deed-per-repo manifest + RSR profile + egress (D308/D312/ADR-009)
 LICENSE
-LICENSES/                  # REUSE licence texts (MPL-2.0 code / CC-BY-SA-4.0 docs)
+LICENSES/                  # REUSE licence texts
 
-# ─── Build entry point ───────────────────────────────────────────────────────
+# ─── Build & packaging entry points ──────────────────────────────────────────
 Justfile                   # cross-toolchain build orchestration
+Containerfile              # sealed multi-stage Wolfi/Chainguard container build
+mise.toml                  # developer tool version pins (rust, zig, just, shfmt)
 
-# ─── Conventional dotfiles (tool-required at root) ───────────────────────────
+# ─── Conventional dotfiles & metadata directories ────────────────────────────
 .editorconfig
 .gitattributes
 .gitignore
 .git/
 .github/                   # workflows + community-health config
-.machine_readable/         # AI manifests, contractiles, descriptiles
+.machine_readable/         # contractiles, descriptiles, root-allow
+.well-known/               # RFC 9116 security.txt
 
-# ─── Source / build trees (one per language) ─────────────────────────────────
+# ─── Source, verification & documentation trees ──────────────────────────────
 core-spark/                # SPARK/Ada verified classifier kernel
 abi-idris2/                # Idris2 ABI conformance proofs
 host-rust/                 # Rust host application + Windows collectors
 ffi-zig/                   # Zig C-ABI seam + independent reference
 audits/                    # accepted structural residuals + assail classifications
+container/                 # container build notes satisfying RSR container gate
+docs/                      # architecture tour (EXPLAINME.adoc) + field validation
 scripts/                   # estate-rule check scripts
 installer/                 # Windows PowerShell install/uninstall for the sentinel
 outreach/                  # on-the-record outreach to ACROS Security / 0patch + status
-flake.guix

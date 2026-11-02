@@ -43,9 +43,6 @@ fn main() {
     black_box(sink);
 
     let per = elapsed.as_nanos() as f64 / iters as f64;
-    println!(
-        "classify: {iters} calls in {:?}  ->  {per:.2} ns/call  ({:.1} M calls/s)",
-        elapsed,
-        1000.0 / per
-    );
+    let mops = 1000.0 / per;
+    println!("classify: {iters} calls in {elapsed:?}  ->  {per:.2} ns/call  ({mops:.1} M calls/s)");
 }

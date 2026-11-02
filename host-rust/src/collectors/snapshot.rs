@@ -22,6 +22,9 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
+    /// Construct an in-memory snapshot directly from text (infallible; unknown
+    /// keys/values degrade to `Unknown` at [`SignalSource::collect`] time).
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(text: impl Into<String>) -> Self {
         Snapshot { text: text.into() }
     }

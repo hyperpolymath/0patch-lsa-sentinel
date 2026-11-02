@@ -57,20 +57,36 @@ which is *UTF-16LE* encoded and grows to ~10 MB. Real lines observed:
 
 An lsass-targeted patch application would appear as
 `+Patch NNNN applied in application lsass.exe+`. On this machine there
-were *zero* lsass mentions in the log — consistent with the verdict
-*MOOT* (no lsass-targeted patch currently outstanding).
+were *zero* lsass mentions in the log — empirically consistent with no
+lsass-targeted patch having applied, though because `+RunAsPPL=0x1+`
+right-censors `+lsass.exe+` entries in `+0patch.log+`, the fail-safe
+collector reports `+Unknown+` → *INDETERMINATE* (exit `1`, Warning
+`1002`) rather than claiming *MOOT* (exit `0`).
 
 The service log also shows lines like
 `+Pid: 6184 Loader already injected permanently in 0patchDriver+` —
 injection happens via the kernel driver.
 
-The collector (`+host-rust/src/collectors/opatch.rs+`) was rewritten
-accordingly: read the last ≤2 MiB of the log, decode UTF-16LE (pure
-Rust, BOM-tolerant, tail-cut-tolerant), `+Present+` on any
-`+applied in application lsass.exe+` line, `+Absent+` on a decodable
-non-trivial log without one, `+Unknown+` otherwise. The `+Agent+`
-directory probe is kept only to distinguish "`0patch not installed`"
-from "`installed but no readable log`" in the diagnostic output.
+The collector (`+host-rust/src/collectors/opatch.rs+`) reads the last
+≤2 MiB of `+0patch.log+` (bounded via `+Read::take+`), decodes UTF-16LE
+(pure Rust, BOM-tolerant, tail-cut-tolerant), and delegates to
+`+parse_opatch_log(log_text, loader)+`:
+
+* `+Present+` on any `+applied in application lsass.exe+` line (including
+  a prior application still in the tail window after `+RunAsPPL+` was
+  enabled, which immediately triggers `+BLOCKED-INERT+`).
+* `+Absent+` *only* when `+loader == LoaderPresence::Loaded+` and a
+  decodable non-empty log has no `+lsass.exe+` line.
+* `+Unknown+` on an empty/missing/undecodable log *or* when
+  `+loader != LoaderPresence::Loaded+` and no `+lsass.exe+` line is
+  present — because `+RunAsPPL+` blocks `+0patchLoader+` before any
+  `+lsass.exe+` patch can apply and be written to `+0patch.log+`
+  (right-censorship). Returning `+Unknown+` ensures protected hosts fail
+  safe to `+INDETERMINATE+` (exit `1`, Warning `1002`) rather than a
+  false `+MOOT+` all-clear (exit `0`).
+
+The `+Agent+` directory probe is kept only to distinguish "`0patch not
+installed`" from "`installed but no readable log`" in diagnostic output.
 
 ==== 4. CodeIntegrity event log — QUERY PATH WORKS, MATCH PATH UNOBSERVED
 
@@ -99,8 +115,11 @@ rewritten against it
 
 |`+Present+` path (an actual lsass-targeted patch application in the
 log) |*Still open* — never observed live; no lsass patch was outstanding
-on the validation host. The "`no lsass line in recent log ⇒ Absent`"
-inference is a heuristic.
+on the validation host. When `+loader == Loaded+`, "`no lsass line in
+active log ⇒ Absent`" applies; when `+loader != Loaded+` (e.g.
+`+RunAsPPL=On+`), `+0patch.log+` is right-censored for `+lsass.exe+` and
+returns `+Unknown+` (`+INDETERMINATE+`, exit `1`) until a separate
+on-disk catalog source is field-confirmed.
 
 |CodeIntegrity 3033/3063 block-event path |*Still open* — query
 mechanism works, but no block is currently occurring, so a positive

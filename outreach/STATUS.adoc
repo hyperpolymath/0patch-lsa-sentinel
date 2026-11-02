@@ -7,14 +7,16 @@
 *send/reply status unconfirmed* (the Gmail connector was unavailable
 when this note was written — verify in Gmail).
 
-|Public analysis |Live: `+DESIGN.md+` (the alert) at
+|Public analysis |Live: link:../DESIGN.adoc[`+DESIGN.adoc+`] (the alert) at
 https://github.com/hyperpolymath/0patch-lsa-sentinel
 
-|Detector |Now exists in this repo (verified classifier + installer);
-collectors not yet field-validated.
+|Detector |Implemented in this repo (verified 4-language classifier +
+PowerShell installer); `+reg.exe+` output format (decoded as UTF-8) and
+`+0patch.log+` UTF-16LE encoding field-confirmed
+(`+docs/FIELD-VALIDATION.adoc+`), live `+Present+` trigger still pending.
 
 |Follow-up email |Drafted here:
-link:./0patch-followup.md[`+0patch-followup.md+`] — use if the first
+link:./0patch-followup.adoc[`+0patch-followup.adoc+`] — use if the first
 didn’t land or to add the public link + tool.
 
 |Reply received? |*Unknown — check Gmail.*
@@ -25,9 +27,10 @@ didn’t land or to add the public link + tool.
 [arabic]
 . Confirm whether the first email actually sent (Gmail → Sent), and
 whether there’s a reply.
-. If no reply after a reasonable interval, send `+0patch-followup.md+`.
+. If no reply after a reasonable interval, send
+link:./0patch-followup.adoc[`+0patch-followup.adoc+`].
 . Consider a public touchpoint (X/@0patch or a blog comment) linking
-`+DESIGN.md+`, since ACROS has no public issue tracker.
+link:../DESIGN.adoc[`+DESIGN.adoc+`], since ACROS has no public issue tracker.
 
 There is *no vendor GitHub* to file against — `+github.com/0patch+` is
 an unrelated namesake.
