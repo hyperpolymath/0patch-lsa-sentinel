@@ -12,6 +12,11 @@ use crate::collectors::parse::parse_runas_ppl;
 use crate::model::LsaProtection;
 use std::process::Command;
 
+/// Query `HKLM\SYSTEM\CurrentControlSet\Control\Lsa\RunAsPPL` via `reg.exe`.
+///
+/// Non-zero exit from `reg.exe` indicates the value is absent (LSA Protection
+/// not configured -> [`LsaProtection::Off`]); malformed output parses to
+/// [`LsaProtection::Unknown`].
 pub fn lsa_protection() -> Result<LsaProtection, String> {
     let out = Command::new("reg")
         .args([

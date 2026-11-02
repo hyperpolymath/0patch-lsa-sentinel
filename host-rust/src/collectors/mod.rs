@@ -33,6 +33,7 @@ pub fn collect_live() -> Result<Signals, String> {
     Ok(Signals { protection, loader, patches })
 }
 
+/// Stub for non-Windows hosts directing callers to `--snapshot <file>`.
 #[cfg(not(windows))]
 pub fn collect_live() -> Result<Signals, String> {
     Err("live collection is Windows-only; use --snapshot <file> on this platform".into())

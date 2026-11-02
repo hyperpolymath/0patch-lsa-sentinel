@@ -10,7 +10,8 @@ with `--locked --release` and verifying `ffi-zig/`, copied into a non-root
 [source,bash]
 ----
 podman build -t 0patch-lsa-sentinel:verify -f Containerfile .
-podman run --rm 0patch-lsa-sentinel:verify --snapshot /path/to/host.snap
+podman run --rm -v /path/to/host.snap:/work/host.snap:ro \
+  0patch-lsa-sentinel:verify --snapshot /work/host.snap
 ----
 
 Live Windows collection (`reg.exe`, `wevtutil.exe`, `0patch.log`) runs natively

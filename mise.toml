@@ -5,7 +5,7 @@
 # mise.
 
 [settings]
-lockfile = true
+lockfile = false
 
 [tools]
 rust = "latest"

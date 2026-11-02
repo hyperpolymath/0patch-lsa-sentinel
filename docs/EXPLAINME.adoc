@@ -30,8 +30,10 @@ dated verification receipt.
 
 | `abi-idris2/`
 | Idris2 (`%default total`)
-| Dependent-type ABI specification (`Sentinel.ABI`) proving integer discriminant
-  round-trips (`decode . encode = Just`) and truth-table alignment with SPARK.
+| Dependent-type ABI specification (`Sentinel.ABI`) proving totality, integer
+  discriminant round-trips (`decode . encode = Just`), and local specification
+  properties (`absentIsMoot`, `noSilentGreen`). Cross-language agreement with
+  SPARK is verified over the linked C ABI in `host-rust/tests/classify_tests.rs`.
 
 | `ffi-zig/`
 | Zig 0.15

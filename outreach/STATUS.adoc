@@ -11,9 +11,9 @@ when this note was written — verify in Gmail).
 https://github.com/hyperpolymath/0patch-lsa-sentinel
 
 |Detector |Implemented in this repo (verified 4-language classifier +
-PowerShell installer); `+reg.exe+` and `+0patch.log+` UTF-16LE formats
-field-confirmed (`+docs/FIELD-VALIDATION.adoc+`), live `+Present+` trigger
-still pending.
+PowerShell installer); `+reg.exe+` output format (decoded as UTF-8) and
+`+0patch.log+` UTF-16LE encoding field-confirmed
+(`+docs/FIELD-VALIDATION.adoc+`), live `+Present+` trigger still pending.
 
 |Follow-up email |Drafted here:
 link:./0patch-followup.adoc[`+0patch-followup.adoc+`] — use if the first

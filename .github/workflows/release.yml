@@ -51,7 +51,11 @@ jobs:
           New-Item -ItemType Directory -Force dist | Out-Null
           Copy-Item host-rust\target\release\lsa-sentinel.exe dist\
           Copy-Item installer\*.ps1 dist\
-          Copy-Item installer\README.adoc dist\INSTALL.adoc
+          $repoBase = "https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}"
+          (Get-Content -Raw installer\README.adoc) `
+            -replace 'link:\.\./docs/FIELD-VALIDATION\.adoc', "${repoBase}/docs/FIELD-VALIDATION.adoc" `
+            -replace 'link:\.\./AFFIRMATION\.adoc', "${repoBase}/AFFIRMATION.adoc" |
+            Set-Content -Encoding utf8NoBOM dist\INSTALL.adoc
           Compress-Archive -Path dist\* -DestinationPath "lsa-sentinel-${{ github.ref_name }}-x86_64-windows.zip" -Force
 
       - name: Publish release

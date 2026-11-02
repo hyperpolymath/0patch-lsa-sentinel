@@ -5,6 +5,8 @@
 // reference classifier and needs no native toolchain.
 use std::path::PathBuf;
 
+/// Scan `/usr/lib/gcc/<triple>/<version>/adalib` for an installed GNAT runtime
+/// directory containing `libgnat.so` or `libgnat.a`.
 fn discover_gnat_adalib() -> Option<PathBuf> {
     let gcc_root = std::path::Path::new("/usr/lib/gcc");
     let triples = std::fs::read_dir(gcc_root).ok()?;
@@ -23,6 +25,7 @@ fn discover_gnat_adalib() -> Option<PathBuf> {
     best
 }
 
+/// Configure Cargo native link directives when `--features verified-core` is active.
 fn main() {
     if std::env::var("CARGO_FEATURE_VERIFIED_CORE").is_ok() {
         // Built by `gprbuild -P core-spark/sentinel_core.gpr` (see Justfile).

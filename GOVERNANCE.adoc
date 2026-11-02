@@ -30,12 +30,14 @@ Maintain existing tests - Update documentation as needed
 
 * Require discussion in issues or pull requests
 * Include new features, architectural changes, API changes
-* Need approval from at least 2 maintainers
+* Need approval from at least 2 maintainers (or the sole maintainer while
+  link:MAINTAINERS.adoc[`MAINTAINERS.adoc`] lists a single maintainer)
 
 ==== Breaking Changes
 
 * Require RFC (Request for Comments) process
-* Need approval from majority of maintainers
+* Need approval from majority of maintainers (or the sole maintainer while
+  link:MAINTAINERS.adoc[`MAINTAINERS.adoc`] lists a single maintainer)
 * Must include migration guide
 
 === Code of Conduct

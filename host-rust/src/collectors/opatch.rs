@@ -42,6 +42,11 @@ const AGENT_DIR: &str = r"C:\Program Files (x86)\0patch\Agent";
 /// Read at most this much of the log tail (the file grows to ~10 MB).
 const TAIL_CAP: u64 = 2 * 1024 * 1024;
 
+/// Read `C:\ProgramData\0patch\Logs\0patch.log` (up to [`TAIL_CAP`]) and
+/// classify `lsass.exe` patch presence relative to `loader`.
+///
+/// Missing, unreadable, or odd-byte/undecodable logs fail closed to
+/// [`PatchStatus::Unknown`] (yielding `INDETERMINATE`).
 pub fn lsass_patch_status(loader: LoaderPresence) -> Result<PatchStatus, String> {
     match read_log_tail_utf16le(Path::new(LOG_PATH), TAIL_CAP) {
         Some(text) => Ok(parse_opatch_log(&text, loader)),
@@ -69,9 +74,9 @@ pub fn lsass_patch_status(loader: LoaderPresence) -> Result<PatchStatus, String>
 /// The seek offset is aligned down to an even byte so the tail window starts
 /// on a UTF-16 code-unit boundary (the log starts with a 2-byte BOM, so code
 /// units sit at even offsets). Uses `Read::take(cap)` so concurrent appends by
-/// `0patchService` cannot grow the read buffer past `cap` or leave an odd
-/// trailing byte if a 2-byte code unit is mid-flush. Returns `None` on any I/O
-/// or decode failure.
+/// `0patchService` cannot grow the read buffer past `cap`. Odd-length (torn)
+/// reads are rejected by [`decode_utf16le`] so the caller fails closed to
+/// [`PatchStatus::Unknown`].
 fn read_log_tail_utf16le(path: &Path, cap: u64) -> Option<String> {
     let mut f = File::open(path).ok()?;
     let len = f.metadata().ok()?.len();
@@ -80,10 +85,5 @@ fn read_log_tail_utf16le(path: &Path, cap: u64) -> Option<String> {
     let expected = len.saturating_sub(start).min(cap) as usize;
     let mut bytes = Vec::with_capacity(expected);
     f.take(cap).read_to_end(&mut bytes).ok()?;
-    // If a concurrent append caught a UTF-16 code unit half-written at EOF,
-    // trim the single trailing byte rather than failing the whole window.
-    if (bytes.len() & 1) != 0 {
-        bytes.pop();
-    }
     decode_utf16le(&bytes)
 }

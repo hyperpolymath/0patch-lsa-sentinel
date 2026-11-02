@@ -40,10 +40,12 @@ exist while the loader is blocked from `+lsass.exe+`.
 ** 🟠 `+INDETERMINATE+` (exit `1`, Warning `1002`) — insufficient or
 right-censored signal; investigate rather than assume coverage.
 ** 🟢 `+OPEN-COVERED+` (exit `0`, Information `1000`) — LSA Protection
-off, loader in `+lsass.exe+`, lsass patches live (credential-dump
-protection forfeited).
-** ⚪ `+MOOT+` (exit `0`, Information `1000`) — loader unblocked and no
-outstanding lsass-targeted patches.
+off and no recent loader-block event (loader presence inferred rather
+than inspected inside `+lsass.exe+`), with an `+lsass.exe+` application
+recorded in the `+0patch.log+` window (credential-dump protection
+forfeited).
+** ⚪ `+MOOT+` (exit `0`, Information `1000`) — loader inferred unblocked
+and no `+lsass.exe+` application recorded in the `+0patch.log+` window.
 . *Four-language verified classifier & ABI seam:*
 * `+core-spark/+` — SPARK/Ada decision kernel
 (`+Sentinel.Classifier.Classify+`), proved pure, total, and postcondition-conforming
@@ -63,9 +65,15 @@ link:./outreach/STATUS.adoc[`+outreach/STATUS.adoc+`].
 
 === Status & verification honesty
 
-* *Proven / tested:* The SPARK classifier kernel, Idris2 ABI proofs, Zig
-FFI reference, and Rust 27-state mirror + parser unit tests are built
-and cross-checked in CI (`+just all+` / `+.github/workflows/rust-ci.yml+`).
+* *Proven / tested:* In CI (`+.github/workflows/rust-ci.yml+`), the Rust
+host crate (`+check+`, `+clippy -D warnings+`, unit + 27-state tests,
+and `+x86_64-pc-windows-gnu+` live-collector check/clippy) is
+differentially tested over the C ABI against the linked SPARK static
+library (`+libsentinel_core.a+`), alongside Zig 0.15 FFI unit tests,
+Idris2 totality and round-trip proofs, DEED + ADR-009 egress validation,
+and SPARK anti-theatre source checks. Full `+gnatprove+` proof discharge
+runs locally via `+just prove+` / `+just all+` (recorded in
+link:./AFFIRMATION.adoc[`+AFFIRMATION.adoc+`]).
 * *Partially field-validated (`+2026-07-02+`):* Live `+reg.exe+`
 `+RunAsPPL+` parsing, `+0patch\Agent+` paths, and the UTF-16LE
 `+C:\ProgramData\0patch\Logs\0patch.log+` format were confirmed against a
@@ -88,8 +96,8 @@ link:./AUDIT.adoc[`+AUDIT.adoc+`] for the full dated verification boundary.
 
 [source,bash]
 ----
-just --list                                      # inspect cross-toolchain recipes
-cd host-rust && cargo test --locked              # portable Rust + 27-state suite
+just --list                                                      # inspect cross-toolchain recipes
+cargo test --locked --manifest-path host-rust/Cargo.toml         # portable Rust + 27-state suite
 cargo run --manifest-path host-rust/Cargo.toml -- --snapshot host.snap
 ----
 

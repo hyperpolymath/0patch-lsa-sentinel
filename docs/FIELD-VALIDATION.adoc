@@ -57,8 +57,11 @@ which is *UTF-16LE* encoded and grows to ~10 MB. Real lines observed:
 
 An lsass-targeted patch application would appear as
 `+Patch NNNN applied in application lsass.exe+`. On this machine there
-were *zero* lsass mentions in the log — consistent with the verdict
-*MOOT* (no lsass-targeted patch currently outstanding).
+were *zero* lsass mentions in the log — empirically consistent with no
+lsass-targeted patch having applied, though because `+RunAsPPL=0x1+`
+right-censors `+lsass.exe+` entries in `+0patch.log+`, the fail-safe
+collector reports `+Unknown+` → *INDETERMINATE* (exit `1`, Warning
+`1002`) rather than claiming *MOOT* (exit `0`).
 
 The service log also shows lines like
 `+Pid: 6184 Loader already injected permanently in 0patchDriver+` —
