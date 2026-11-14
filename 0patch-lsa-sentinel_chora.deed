@@ -9,8 +9,8 @@
 (repo-deed
   :schema-version "1.0.0"
   :canonical-name "0patch-lsa-sentinel"
-  :beholding-chora #u5"estate/chora"
-  :repo-uuid #u5"github.com/hyperpolymath/0patch-lsa-sentinel"
+  :beholding-chora #u8"chora:estate/github.com/hyperpolymath"
+  :repo-uuid #u8"gv-clade-index:github.com/hyperpolymath/0patch-lsa-sentinel"
 
   (identity
     :primary-forge github
